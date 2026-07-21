@@ -64,30 +64,50 @@ enum Role {
 
 // ─── Bolsas ───────────────────────────────────────────────────────────────────
 
+model FonteBolsa {
+  id         String   @id @default(cuid())
+  nome       String   @unique
+  urlBase    String
+  ativa      Boolean  @default(true)
+  ultimaSync DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  bolsas Bolsa[]
+}
+
 model Bolsa {
-  id           String      @id @default(cuid())
-  slug         String      @unique
-  titulo       String
-  universidade String
-  pais         String
-  paisCode     String
-  bandeira     String
-  nivel        String
-  area         String
-  tipo         TipoBolsa
-  prazo        DateTime
-  dataAbertura DateTime?
-  duracao      String
-  valor        String
-  descricao    String      @db.Text
-  requisitos   String[]
-  documentos   String[]
-  linkOficial  String
-  status       StatusBolsa @default(ABERTA)
-  destaque     Boolean     @default(false)
-  visualizacoes Int        @default(0)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id             String      @id @default(cuid())
+  slug           String      @unique
+  titulo         String
+  universidade   String
+  pais           String
+  paisCode       String
+  bandeira       String
+  nivel          String
+  area           String
+  tipo           TipoBolsa
+  prazo          DateTime
+  dataAbertura   DateTime?
+  duracao        String
+  valor          String
+  descricao      String      @db.Text
+  requisitos     String[]
+  documentos     String[]
+  linkOficial    String
+  status         StatusBolsa @default(ABERTA)
+  destaque       Boolean     @default(false)
+  visualizacoes  Int         @default(0)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  // Rastreamento de importação automática
+  fonteId        String?
+  fonte          FonteBolsa? @relation(fields: [fonteId], references: [id])
+  urlOriginal    String?
+  importadoEm    DateTime?
+  idiomaOriginal String?
+  sincronizadoEm DateTime?
 
   processo ProcessoStep[]
   dicas    Dica[]
@@ -98,6 +118,7 @@ model Bolsa {
   @@index([status])
   @@index([destaque])
   @@index([prazo])
+  @@index([fonteId])
 }
 
 model ProcessoStep {

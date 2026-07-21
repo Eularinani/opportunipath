@@ -1,0 +1,37 @@
+name: Importar Bolsas Automaticamente
+
+on:
+  schedule:
+    # Corre todos os dias às 02:00 UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  importar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: app-next/package-lock.json
+
+      - name: Instalar dependências
+        working-directory: app-next
+        run: npm ci
+
+      - name: Gerar Prisma Client
+        working-directory: app-next
+        run: npm run db:generate
+
+      - name: Importar bolsas
+        working-directory: app-next
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GOOGLE_CLOUD_TRANSLATE_API_KEY: ${{ secrets.GOOGLE_CLOUD_TRANSLATE_API_KEY }}
+        run: npx tsx scripts/importar-bolsas.ts
