@@ -1,0 +1,194 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth (NextAuth.js v5) ────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// ─── Bolsas ───────────────────────────────────────────────────────────────────
+
+model Bolsa {
+  id           String      @id @default(cuid())
+  slug         String      @unique
+  titulo       String
+  universidade String
+  pais         String
+  paisCode     String
+  bandeira     String
+  nivel        String
+  area         String
+  tipo         TipoBolsa
+  prazo        DateTime
+  dataAbertura DateTime?
+  duracao      String
+  valor        String
+  descricao    String      @db.Text
+  requisitos   String[]
+  documentos   String[]
+  linkOficial  String
+  status       StatusBolsa @default(ABERTA)
+  destaque     Boolean     @default(false)
+  visualizacoes Int        @default(0)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  processo ProcessoStep[]
+  dicas    Dica[]
+
+  @@index([pais])
+  @@index([nivel])
+  @@index([area])
+  @@index([status])
+  @@index([destaque])
+  @@index([prazo])
+}
+
+model ProcessoStep {
+  id        String  @id @default(cuid())
+  passo     Int
+  titulo    String
+  descricao String
+  deadline  String?
+  bolsaId   String
+  bolsa     Bolsa   @relation(fields: [bolsaId], references: [id], onDelete: Cascade)
+}
+
+model Dica {
+  id        String @id @default(cuid())
+  titulo    String
+  descricao String
+  bolsaId   String
+  bolsa     Bolsa  @relation(fields: [bolsaId], references: [id], onDelete: Cascade)
+}
+
+enum TipoBolsa {
+  TOTAL
+  PARCIAL
+  PESQUISA
+  INTERCAMBIO
+}
+
+enum StatusBolsa {
+  ABERTA
+  FECHADA
+  URGENTE
+  EM_BREVE
+}
+
+// ─── Guias ────────────────────────────────────────────────────────────────────
+
+model Guia {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  titulo    String
+  categoria String
+  resumo    String
+  conteudo  String   @db.Text
+  imagem    String?
+  autor     String
+  publicado Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoria])
+  @@index([publicado])
+}
+
+// ─── Depoimentos ─────────────────────────────────────────────────────────────
+
+model Depoimento {
+  id        String   @id @default(cuid())
+  nome      String
+  curso     String
+  pais      String
+  texto     String   @db.Text
+  imagem    String?
+  aprovado  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ─── Newsletter ───────────────────────────────────────────────────────────────
+
+model NewsletterSubscriber {
+  id         String    @id @default(cuid())
+  email      String    @unique
+  ativo      Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  canceladoEm DateTime?
+}
+
+// ─── Contacto ─────────────────────────────────────────────────────────────────
+
+model Contacto {
+  id        String          @id @default(cuid())
+  nome      String
+  email     String
+  assunto   String
+  mensagem  String          @db.Text
+  lido      Boolean         @default(false)
+  status    StatusContacto  @default(PENDENTE)
+  createdAt DateTime        @default(now())
+}
+
+enum StatusContacto {
+  PENDENTE
+  RESPONDIDO
+  ARQUIVADO
+}

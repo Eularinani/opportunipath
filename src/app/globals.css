@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 174 84% 29%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 43 96% 50%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 174 84% 29%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 174 84% 29%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground font-inter; }
+  h1, h2, h3, h4, h5, h6 { @apply font-poppins; }
+}
+
+@layer utilities {
+  .container-ango {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  .gradient-hero {
+    background: linear-gradient(135deg, #0F172A 0%, #134E4A 50%, #0F172A 100%);
+  }
+  .gradient-gold {
+    background: linear-gradient(90deg, #F59E0B, #FBBF24);
+  }
+  .gradient-cta {
+    background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%);
+  }
+  .bg-gradient-gold {
+    background: linear-gradient(90deg, #F59E0B, #FBBF24);
+    height: 4px;
+  }
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
