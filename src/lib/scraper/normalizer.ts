@@ -3,48 +3,60 @@ import type { StatusBolsa } from '@prisma/client';
 import { calcularStatus } from '@/lib/bolsas';
 import type { ScrapedBolsa, RawBolsa } from './types';
 
+// Nomes (pt/en) → código ISO. Só são reconhecidos países desta lista; o resto fica "Por confirmar".
 const PAIS_TO_CODE: Record<string, string> = {
   'alemanha': 'DE', 'germany': 'DE', 'deutschland': 'DE',
-  'reino unido': 'GB', 'united kingdom': 'GB', 'uk': 'GB',
+  'reino unido': 'GB', 'united kingdom': 'GB', 'uk': 'GB', 'britain': 'GB', 'england': 'GB', 'scotland': 'GB',
   'estados unidos': 'US', 'united states': 'US', 'usa': 'US',
   'frança': 'FR', 'france': 'FR',
   'portugal': 'PT',
   'espanha': 'ES', 'spain': 'ES',
   'itália': 'IT', 'italy': 'IT',
-  'holanda': 'NL', 'netherlands': 'NL',
+  'holanda': 'NL', 'países baixos': 'NL', 'netherlands': 'NL',
   'bélgica': 'BE', 'belgium': 'BE',
   'suíça': 'CH', 'switzerland': 'CH',
   'suécia': 'SE', 'sweden': 'SE',
   'noruega': 'NO', 'norway': 'NO',
   'dinamarca': 'DK', 'denmark': 'DK',
   'finlândia': 'FI', 'finland': 'FI',
-  'austria': 'AT', 'áustria': 'AT',
+  'áustria': 'AT', 'austria': 'AT',
   'irlanda': 'IE', 'ireland': 'IE',
+  'hungria': 'HU', 'hungary': 'HU',
+  'turquia': 'TR', 'turkey': 'TR', 'türkiye': 'TR',
   'canadá': 'CA', 'canada': 'CA',
-  'australia': 'AU', 'austrlia': 'AU', 'austrália': 'AU',
+  'austrália': 'AU', 'australia': 'AU',
+  'nova zelândia': 'NZ', 'new zealand': 'NZ',
   'china': 'CN',
   'japão': 'JP', 'japan': 'JP',
-  'coreia do sul': 'KR', 'south korea': 'KR',
+  'coreia do sul': 'KR', 'south korea': 'KR', 'korea': 'KR',
+  'singapura': 'SG', 'singapore': 'SG',
   'brasil': 'BR', 'brazil': 'BR',
   'áfrica do sul': 'ZA', 'south africa': 'ZA',
   'angola': 'AO',
 };
 
-const BANDEIRAS: Record<string, string> = {
-  DE: '🇩🇪', GB: '🇬🇧', US: '🇺🇸', FR: '🇫🇷', PT: '🇵🇹', ES: '🇪🇸',
-  IT: '🇮🇹', NL: '🇳🇱', BE: '🇧🇪', CH: '🇨🇭', SE: '🇸🇪', NO: '🇳🇴',
-  DK: '🇩🇰', FI: '🇫🇮', AT: '🇦🇹', IE: '🇮🇪', CA: '🇨🇦', AU: '🇦🇺',
-  CN: '🇨🇳', JP: '🇯🇵', KR: '🇰🇷', BR: '🇧🇷', ZA: '🇿🇦', AO: '🇦🇴',
+const CODE_TO_NOME: Record<string, string> = {
+  DE: 'Alemanha', GB: 'Reino Unido', US: 'Estados Unidos', FR: 'França', PT: 'Portugal', ES: 'Espanha',
+  IT: 'Itália', NL: 'Países Baixos', BE: 'Bélgica', CH: 'Suíça', SE: 'Suécia', NO: 'Noruega',
+  DK: 'Dinamarca', FI: 'Finlândia', AT: 'Áustria', IE: 'Irlanda', HU: 'Hungria', TR: 'Turquia',
+  CA: 'Canadá', AU: 'Austrália', NZ: 'Nova Zelândia', CN: 'China', JP: 'Japão', KR: 'Coreia do Sul',
+  SG: 'Singapura', BR: 'Brasil', ZA: 'África do Sul', AO: 'Angola',
 };
 
-function detectarPaisCode(pais?: string): string {
-  if (!pais) return 'XX';
-  const normalized = pais.toLowerCase().trim();
-  return PAIS_TO_CODE[normalized] ?? 'XX';
+function getBandeira(code: string): string {
+  if (!/^[A-Z]{2}$/.test(code) || code === 'XX') return '🌍';
+  // Emoji de bandeira a partir do código ISO (indicadores regionais)
+  return String.fromCodePoint(...[...code].map((c) => 0x1f1a5 + c.charCodeAt(0)));
 }
 
-function getBandeira(code: string): string {
-  return BANDEIRAS[code] ?? '🌍';
+/** Procura um país conhecido no texto (com limites de palavra). Nomes mais longos primeiro. */
+function detectarPaisCode(texto?: string): string {
+  if (!texto) return 'XX';
+  const nomes = Object.keys(PAIS_TO_CODE).sort((a, b) => b.length - a.length);
+  for (const nome of nomes) {
+    if (new RegExp(`(^|[^\\p{L}])${nome}([^\\p{L}]|$)`, 'iu').test(texto)) return PAIS_TO_CODE[nome];
+  }
+  return 'XX';
 }
 
 // As inferências abaixo só devolvem um valor quando há uma palavra-chave clara
@@ -62,22 +74,21 @@ function inferirTipo(titulo: string, descricao?: string): NonNullable<RawBolsa['
   return null;
 }
 
-function inferirNivel(titulo: string, descricao?: string): string | null {
-  const texto = `${titulo} ${descricao ?? ''}`;
-  if (contem(texto, 'postdoctoral', 'post-doctoral', 'pós-doutoramento')) return 'Pós-Doutoramento';
-  if (contem(texto, 'phd', 'doctoral', 'doutoramento')) return 'Doutoramento';
-  if (contem(texto, 'masters?', 'mestrado', 'msc', 'mba', 'llm')) return 'Mestrado';
-  if (contem(texto, 'bachelor', 'undergraduate', 'licenciatura')) return 'Licenciatura';
+// Nível e área só a partir do título: a descrição costuma mencionar vários níveis/áreas
+function inferirNivel(titulo: string): string | null {
+  if (contem(titulo, 'postdoctoral', 'post-doctoral', 'postdoc', 'pós-doutoramento')) return 'Pós-Doutoramento';
+  if (contem(titulo, 'phd', 'doctoral', 'doctorate', 'doutoramento')) return 'Doutoramento';
+  if (contem(titulo, 'masters?', 'mestrado', 'msc', 'mba', 'llm')) return 'Mestrado';
+  if (contem(titulo, 'bachelor', 'undergraduate', 'licenciatura')) return 'Licenciatura';
   return null;
 }
 
-function inferirArea(titulo: string, descricao?: string): string | null {
-  const texto = `${titulo} ${descricao ?? ''}`;
-  if (contem(texto, 'engineering', 'engenharia')) return 'Engenharia';
-  if (contem(texto, 'medicine', 'medicina', 'public health', 'saúde pública', 'nursing')) return 'Saúde';
-  if (contem(texto, 'business', 'mba', 'management', 'gestão', 'negócios')) return 'Negócios';
-  if (contem(texto, 'computer science', 'information technology', 'informática', 'data science')) return 'Tecnologia';
-  if (contem(texto, 'law', 'direito', 'llm')) return 'Direito';
+function inferirArea(titulo: string): string | null {
+  if (contem(titulo, 'engineering', 'engenharia')) return 'Engenharia';
+  if (contem(titulo, 'medicine', 'medicina', 'public health', 'saúde pública', 'nursing')) return 'Saúde';
+  if (contem(titulo, 'business', 'mba', 'management', 'finance', 'gestão', 'negócios')) return 'Negócios';
+  if (contem(titulo, 'computer science', 'information technology', 'informática', 'data science')) return 'Tecnologia';
+  if (contem(titulo, 'law', 'direito', 'llm')) return 'Direito';
   return null;
 }
 
@@ -112,9 +123,13 @@ export interface NormalizedBolsa {
 }
 
 export function normalizeBolsa(raw: ScrapedBolsa): NormalizedBolsa {
-  const paisCode = raw.paisCode && raw.paisCode !== 'XX' ? raw.paisCode : detectarPaisCode(raw.pais);
+  // País: código explícito da fonte, senão um país conhecido no título ou no campo país
+  const paisCode =
+    raw.paisCode && raw.paisCode !== 'XX'
+      ? raw.paisCode
+      : [raw.titulo, raw.pais].map(detectarPaisCode).find((c) => c !== 'XX') ?? 'XX';
   const bandeira = raw.bandeira && raw.bandeira !== '🌍' ? raw.bandeira : getBandeira(paisCode);
-  const pais = raw.pais && raw.pais.trim() ? raw.pais.trim() : 'Internacional';
+  const pais = CODE_TO_NOME[paisCode] ?? 'Por confirmar';
 
   // Sem prazo explícito na fonte → fica vazio ("Prazo por confirmar"), nunca inventado
   const prazo = parseDate(raw.prazo);
@@ -124,8 +139,8 @@ export function normalizeBolsa(raw: ScrapedBolsa): NormalizedBolsa {
   const descricao = (raw.descricao ?? titulo).trim();
 
   const tipo = raw.tipo ?? inferirTipo(titulo, descricao);
-  const nivel = raw.nivel ?? inferirNivel(titulo, descricao);
-  const area = raw.area ?? inferirArea(titulo, descricao);
+  const nivel = raw.nivel ?? inferirNivel(titulo);
+  const area = raw.area ?? inferirArea(titulo);
   const status = calcularStatus({ prazo, dataAbertura });
 
   const slug = `${slugify(titulo)}-${Date.now().toString(36)}`;
@@ -145,8 +160,9 @@ export function normalizeBolsa(raw: ScrapedBolsa): NormalizedBolsa {
     duracao: raw.duracao?.trim() || 'A definir',
     valor: raw.valor?.trim() || 'A consultar no site oficial',
     descricao,
-    requisitos: raw.requisitos?.length ? raw.requisitos : ['Consultar requisitos no site oficial'],
-    documentos: raw.documentos?.length ? raw.documentos : ['Consultar documentos no site oficial'],
+    // Vazio = a página mostra "consulta no site oficial"
+    requisitos: raw.requisitos ?? [],
+    documentos: raw.documentos ?? [],
     // O link de um agregador não é oficial — o admin indica o oficial na revisão
     linkOficial: raw.linkOficial && raw.linkOficial !== raw.urlOriginal ? raw.linkOficial : null,
     status,

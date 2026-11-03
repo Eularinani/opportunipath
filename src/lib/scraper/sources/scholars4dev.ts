@@ -56,11 +56,21 @@ function parseDeadline(text?: string): Date | null {
   return null;
 }
 
+const ENTIDADES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+
+function decodeEntities(text: string): string {
+  return text
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&([a-z]+);/gi, (m, nome) => ENTIDADES[nome.toLowerCase()] ?? m);
+}
+
 function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return decodeEntities(
+    html
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+  ).trim();
 }
 
 export class Scholars4DevSource implements ScraperSource {
@@ -100,7 +110,7 @@ export class Scholars4DevSource implements ScraperSource {
   }
 
   private parseItem(item: RssItem): ScrapedBolsa | null {
-    const titulo = item.title?.trim();
+    const titulo = item.title ? decodeEntities(item.title).trim() : undefined;
     const link = item.link?.trim();
 
     if (!titulo || !link || titulo.length < 5) return null;

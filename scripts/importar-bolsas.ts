@@ -8,7 +8,7 @@ async function main() {
 
     console.log('\n📊 Resultados:');
     for (const r of results) {
-      console.log(`  • ${r.fonte}: ${r.total} encontradas | ${r.novas} novas | ${r.atualizadas} atualizadas | ${r.falhas} falhas`);
+      console.log(`  • ${r.fonte}: ${r.total} encontradas | ${r.novas} novas | ${r.atualizadas} atualizadas | ${r.ignoradas} ignoradas (prazo passado) | ${r.falhas} falhas`);
     }
 
     const totalFalhas = results.reduce((sum, r) => sum + r.falhas, 0);

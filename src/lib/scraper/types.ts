@@ -34,5 +34,6 @@ export interface ScraperResult {
   total: number;
   novas: number;
   atualizadas: number;
+  ignoradas: number;
   falhas: number;
 }

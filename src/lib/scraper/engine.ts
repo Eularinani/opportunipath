@@ -52,6 +52,7 @@ async function syncSource(source: ScraperSource): Promise<ScraperResult> {
   let novas = 0;
   let atualizadas = 0;
   let falhas = 0;
+  let ignoradas = 0;
 
   for (const raw of rawBolsas) {
     try {
@@ -65,6 +66,12 @@ async function syncSource(source: ScraperSource): Promise<ScraperResult> {
         : await translateBolsa(raw);
 
       const normalized = normalizeBolsa(bolsaToNormalize);
+
+      // Prazo já passou → não vale a pena criar rascunho (o feed também traz edições antigas)
+      if (normalized.prazo && normalized.prazo < new Date()) {
+        ignoradas++;
+        continue;
+      }
 
       const existing = normalized.urlOriginal
         ? await db.bolsa.findFirst({ where: { urlOriginal: normalized.urlOriginal } })
@@ -132,6 +139,7 @@ async function syncSource(source: ScraperSource): Promise<ScraperResult> {
     total: rawBolsas.length,
     novas,
     atualizadas,
+    ignoradas,
     falhas,
   };
 }
@@ -145,7 +153,7 @@ export async function runScraper(): Promise<ScraperResult[]> {
       results.push(result);
     } catch (err) {
       console.error(`[Scraper] Fonte ${source.nome} falhou:`, err);
-      results.push({ fonte: source.nome, total: 0, novas: 0, atualizadas: 0, falhas: 1 });
+      results.push({ fonte: source.nome, total: 0, novas: 0, atualizadas: 0, ignoradas: 0, falhas: 1 });
     }
   }
 
