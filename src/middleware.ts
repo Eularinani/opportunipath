@@ -6,21 +6,23 @@ const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   const { nextUrl, auth: session } = req;
+  // Uma sessão inválida pode vir sem `user` — só conta como sessão se tiver utilizador
+  const user = session?.user;
   const pathname = nextUrl.pathname;
 
   const isAdminRoute = pathname.startsWith('/admin');
   const isAuthRoute = pathname === '/login' || pathname === '/register';
 
   if (isAdminRoute) {
-    if (!session) {
+    if (!user) {
       return NextResponse.redirect(new URL('/login?callbackUrl=' + encodeURIComponent(pathname), nextUrl));
     }
-    if (session.user.role !== 'ADMIN') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.redirect(new URL('/', nextUrl));
     }
   }
 
-  if (isAuthRoute && session) {
+  if (isAuthRoute && user) {
     return NextResponse.redirect(new URL('/', nextUrl));
   }
 

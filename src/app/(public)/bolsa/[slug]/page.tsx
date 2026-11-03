@@ -55,7 +55,7 @@ async function getRelacionadas(bolsa: { id: string; pais: string; area: string |
 export default async function BolsaDetailPage({ params }: Props) {
   const { slug } = await params;
   const session = await auth();
-  const isAdmin = session?.user.role === 'ADMIN';
+  const isAdmin = session?.user?.role === 'ADMIN';
   const bolsa = await getBolsa(slug, isAdmin);
   if (!bolsa) notFound();
 

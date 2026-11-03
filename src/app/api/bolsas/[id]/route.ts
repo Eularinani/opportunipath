@@ -45,7 +45,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!validation.ok) return validation.response;
 
     const session = await auth();
-    const isAdmin = session?.user.role === 'ADMIN';
+    const isAdmin = session?.user?.role === 'ADMIN';
 
     const bolsa = await db.bolsa.findFirst({
       where: { OR: [{ id }, { slug: id }], ...(isAdmin ? {} : bolsaPublicadaWhere) },
