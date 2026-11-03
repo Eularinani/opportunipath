@@ -9,3 +9,10 @@ dist/
 .DS_Store
 public/uploads/
 prisma/migrations/
+
+# Gerados pelo next-pwa / tsc no build
+public/sw.js
+public/workbox-*.js
+public/sw.js.map
+public/workbox-*.js.map
+*.tsbuildinfo
