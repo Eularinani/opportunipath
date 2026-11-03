@@ -12,7 +12,8 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "import:bolsas": "tsx scripts/importar-bolsas.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "admin:password": "tsx scripts/repor-password-admin.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.0.0",

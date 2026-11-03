@@ -11,7 +11,7 @@ export default auth((req) => {
   const pathname = nextUrl.pathname;
 
   const isAdminRoute = pathname.startsWith('/admin');
-  const isAuthRoute = pathname === '/login' || pathname === '/register';
+  const isAuthRoute = pathname === '/login';
 
   if (isAdminRoute) {
     if (!user) {

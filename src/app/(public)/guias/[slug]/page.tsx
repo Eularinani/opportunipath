@@ -6,13 +6,33 @@ import { formatDate } from '@/lib/utils';
 import ScrollReveal from '@/components/shared/ScrollReveal';
 import type { Metadata } from 'next';
 
+type Bloco = { tipo: 'titulo' | 'paragrafo'; texto: string } | { tipo: 'lista'; itens: string[] };
+
+/** Formato simples: "## " = subtítulo, "- " = item de lista, outras linhas = parágrafo. */
+function blocosDoConteudo(conteudo: string): Bloco[] {
+  const blocos: Bloco[] = [];
+  for (const linha of conteudo.split('\n').map((l) => l.trim()).filter(Boolean)) {
+    if (linha.startsWith('## ')) {
+      blocos.push({ tipo: 'titulo', texto: linha.slice(3) });
+    } else if (linha.startsWith('- ')) {
+      const ultimo = blocos[blocos.length - 1];
+      if (ultimo?.tipo === 'lista') ultimo.itens.push(linha.slice(2));
+      else blocos.push({ tipo: 'lista', itens: [linha.slice(2)] });
+    } else {
+      blocos.push({ tipo: 'paragrafo', texto: linha });
+    }
+  }
+  return blocos;
+}
+
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const guia = await db.guia.findUnique({ where: { slug } });
+  // Só guias publicados: não expor título/resumo de rascunhos nas meta tags
+  const guia = await db.guia.findFirst({ where: { slug, publicado: true } });
   if (!guia) return { title: 'Guia não encontrado' };
   return {
     title: guia.titulo,
@@ -65,11 +85,17 @@ export default async function GuiaDetailPage({ params }: Props) {
                     </div>
                   )}
                   <div className="prose prose-slate max-w-none">
-                    {guia.conteudo.split('\n').map((paragraph, i) => (
-                      <p key={i} className="text-path-slate-dark leading-relaxed mb-4">
-                        {paragraph}
-                      </p>
-                    ))}
+                    {blocosDoConteudo(guia.conteudo).map((bloco, i) =>
+                      bloco.tipo === 'titulo' ? (
+                        <h2 key={i} className="font-poppins font-semibold text-xl text-path-navy mt-8 mb-3">{bloco.texto}</h2>
+                      ) : bloco.tipo === 'lista' ? (
+                        <ul key={i} className="list-disc pl-6 space-y-1.5 mb-4 text-path-slate-dark">
+                          {bloco.itens.map((item, j) => <li key={j}>{item}</li>)}
+                        </ul>
+                      ) : (
+                        <p key={i} className="text-path-slate-dark leading-relaxed mb-4">{bloco.texto}</p>
+                      )
+                    )}
                   </div>
                 </div>
               </ScrollReveal>

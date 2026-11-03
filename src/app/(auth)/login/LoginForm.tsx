@@ -48,7 +48,7 @@ export default function LoginForm() {
               Oportuni<span className="text-path-teal">Path</span>
             </span>
           </Link>
-          <h1 className="font-poppins font-bold text-2xl text-path-navy">Entrar na conta</h1>
+          <h1 className="font-poppins font-bold text-2xl text-path-navy">Área de administração</h1>
           <p className="text-path-slate text-sm mt-1">Bem-vindo(a) de volta!</p>
         </div>
 
@@ -94,12 +94,6 @@ export default function LoginForm() {
             </button>
           </form>
 
-          <p className="text-center text-sm text-path-slate mt-6">
-            Ainda não tens conta?{' '}
-            <Link href="/register" className="text-path-teal font-medium hover:underline">
-              Regista-te
-            </Link>
-          </p>
         </div>
       </div>
     </div>

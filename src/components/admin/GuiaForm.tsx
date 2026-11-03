@@ -140,6 +140,7 @@ export default function GuiaForm({ initialData, mode }: GuiaFormProps) {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Conteúdo *</label>
           <Textarea value={form.conteudo} onChange={(e) => updateField('conteudo', e.target.value)} rows={12} className={fieldClass('conteudo')} />
+          <p className="text-xs text-gray-400 mt-1">Formatação: linha a começar por &quot;## &quot; = subtítulo; &quot;- &quot; = item de lista.</p>
           {errors.conteudo && <p className="text-xs text-red-500 mt-1">{errors.conteudo}</p>}
         </div>
 
