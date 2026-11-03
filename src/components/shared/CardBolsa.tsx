@@ -8,6 +8,7 @@ import {
   tipoBolsaLabel,
   tipoBolsaColor,
 } from '@/lib/utils';
+import { calcularStatus } from '@/lib/bolsas';
 import type { Bolsa } from '@prisma/client';
 
 interface CardBolsaProps {
@@ -29,7 +30,15 @@ function TipoIcon({ tipo, className }: { tipo: string; className?: string }) {
 }
 
 function StatusRibbon({ bolsa }: { bolsa: Bolsa }) {
-  if (bolsa.status === 'EM_BREVE') {
+  const status = calcularStatus(bolsa);
+  if (status === 'FECHADA') {
+    return (
+      <span className="absolute top-4 right-4 inline-flex items-center gap-1.5 bg-path-cream text-path-slate text-[11px] font-semibold px-3 py-1.5 rounded-full shadow-sm">
+        Encerrada
+      </span>
+    );
+  }
+  if (status === 'EM_BREVE') {
     const label = getAberturaLabel(bolsa.dataAbertura);
     return (
       <span className="absolute top-4 right-4 inline-flex items-center gap-1.5 bg-path-blue text-white text-[11px] font-semibold px-3 py-1.5 rounded-full shadow-sm">
@@ -38,7 +47,7 @@ function StatusRibbon({ bolsa }: { bolsa: Bolsa }) {
       </span>
     );
   }
-  if (bolsa.status === 'URGENTE') {
+  if (status === 'URGENTE') {
     return (
       <span className="absolute top-4 right-4 inline-flex items-center gap-1.5 bg-path-rose text-white text-[11px] font-semibold px-3 py-1.5 rounded-full shadow-sm animate-pulse">
         <span className="w-1.5 h-1.5 rounded-full bg-white" />
@@ -58,7 +67,7 @@ function StatusRibbon({ bolsa }: { bolsa: Bolsa }) {
 }
 
 function MetaRow({ bolsa }: { bolsa: Bolsa }) {
-  const isEmBreve = bolsa.status === 'EM_BREVE';
+  const isEmBreve = calcularStatus(bolsa) === 'EM_BREVE';
   const prazoColor = getPrazoColor(bolsa.prazo);
   const prazoLabel = getPrazoLabel(bolsa.prazo);
   const aberturaLabel = getAberturaLabel(bolsa.dataAbertura);
@@ -67,7 +76,7 @@ function MetaRow({ bolsa }: { bolsa: Bolsa }) {
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-path-slate">
       <span className="flex items-center gap-1">
         <GraduationCap className="w-3.5 h-3.5" />
-        {bolsa.nivel}
+        {bolsa.nivel ?? 'Nível por confirmar'}
       </span>
       {isEmBreve && aberturaLabel ? (
         <span className="flex items-center gap-1 text-path-blue font-medium">
@@ -80,10 +89,12 @@ function MetaRow({ bolsa }: { bolsa: Bolsa }) {
           {prazoLabel}
         </span>
       )}
-      <span className="flex items-center gap-1">
-        <BookOpen className="w-3.5 h-3.5" />
-        {bolsa.area}
-      </span>
+      {bolsa.area && (
+        <span className="flex items-center gap-1">
+          <BookOpen className="w-3.5 h-3.5" />
+          {bolsa.area}
+        </span>
+      )}
     </div>
   );
 }
@@ -91,6 +102,7 @@ function MetaRow({ bolsa }: { bolsa: Bolsa }) {
 export default function CardBolsa({ bolsa, variant = 'default', className }: CardBolsaProps) {
   const tipoLabel = tipoBolsaLabel(bolsa.tipo);
   const tipoColor = tipoBolsaColor(bolsa.tipo);
+  const status = calcularStatus(bolsa);
 
   if (variant === 'compacto') {
     return (
@@ -120,9 +132,9 @@ export default function CardBolsa({ bolsa, variant = 'default', className }: Car
       <div
         className={cn(
           'h-1.5 w-full',
-          bolsa.status === 'EM_BREVE'
+          status === 'EM_BREVE'
             ? 'bg-gradient-to-r from-path-blue to-path-blue-light'
-            : bolsa.status === 'URGENTE'
+            : status === 'URGENTE'
             ? 'bg-gradient-to-r from-path-rose to-path-rose-light'
             : 'bg-gradient-gold'
         )}
@@ -136,7 +148,7 @@ export default function CardBolsa({ bolsa, variant = 'default', className }: Car
             {bolsa.pais}
           </span>
           <span className={cn('inline-flex items-center gap-1.5 text-[11px] font-medium px-3 py-1 rounded-full', tipoColor)}>
-            <TipoIcon tipo={bolsa.tipo} className="w-3 h-3" />
+            <TipoIcon tipo={bolsa.tipo ?? ''} className="w-3 h-3" />
             {tipoLabel}
           </span>
         </div>

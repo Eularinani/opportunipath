@@ -83,6 +83,7 @@ export interface GuiaDocumento {
   processoAutenticacao: ProcessoAuthStep[];
   requisitosEspecificos: string[];
   reconhecimentoDiplomas: string;
+  fontes: { titulo: string; url: string }[];
 }
 
 export interface ProcessoAuthStep {

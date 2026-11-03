@@ -1,5 +1,8 @@
 import { db } from './db';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, StatusBolsa, TipoBolsa } from '@prisma/client';
+import { bolsaAtivaWhere, bolsaPublicadaWhere, statusWhere } from './bolsas';
+
+const STATUS_VALIDOS: StatusBolsa[] = ['ABERTA', 'FECHADA', 'URGENTE', 'EM_BREVE'];
 
 export interface BolsaFilters {
   q?: string;
@@ -28,6 +31,7 @@ export async function searchBolsas(filters: BolsaFilters) {
     orderBy = 'prazo',
   } = filters;
 
+  const filtros: Prisma.BolsaWhereInput[] = [bolsaPublicadaWhere];
   const where: Prisma.BolsaWhereInput = {};
 
   // Full-text search via PostgreSQL ILIKE
@@ -58,24 +62,33 @@ export async function searchBolsas(filters: BolsaFilters) {
 
   if (tipo) {
     const tipos = Array.isArray(tipo) ? tipo : [tipo];
-    where.tipo = { in: tipos as Prisma.EnumTipoBolsaFilter['in'] };
+    where.tipo = { in: tipos as TipoBolsa[] };
   }
 
-  if (status) {
-    const statuses = Array.isArray(status) ? status : [status];
-    where.status = { in: statuses as Prisma.EnumStatusBolsaFilter['in'] };
+  // O estado é calculado a partir das datas, não lido do campo `status`
+  const statuses = (status ? (Array.isArray(status) ? status : [status]) : [])
+    .filter((s): s is StatusBolsa => STATUS_VALIDOS.includes(s as StatusBolsa));
+  if (statuses.length > 0) {
+    const agora = new Date();
+    filtros.push({ OR: statuses.map((s) => statusWhere(s, agora)) });
+  } else {
+    // Por omissão não mostrar bolsas com prazo já passado
+    filtros.push(bolsaAtivaWhere());
   }
 
   if (destaque !== undefined) {
     where.destaque = destaque;
   }
 
+  filtros.push(where);
+  const whereFinal: Prisma.BolsaWhereInput = { AND: filtros };
+
   const [total, bolsas] = await Promise.all([
-    db.bolsa.count({ where }),
+    db.bolsa.count({ where: whereFinal }),
     db.bolsa.findMany({
-      where,
+      where: whereFinal,
       include: { processo: true, dicas: true },
-      orderBy: { [orderBy]: 'asc' },
+      orderBy: orderBy === 'prazo' ? { prazo: { sort: 'asc', nulls: 'last' } } : { [orderBy]: 'desc' },
       skip: (page - 1) * limit,
       take: limit,
     }),
@@ -94,7 +107,7 @@ export async function getPaisesComContagem() {
   const result = await db.bolsa.groupBy({
     by: ['pais', 'bandeira', 'paisCode'],
     _count: { id: true },
-    where: { status: { not: 'FECHADA' } },
+    where: bolsaAtivaWhere(),
     orderBy: { _count: { id: 'desc' } },
   });
 

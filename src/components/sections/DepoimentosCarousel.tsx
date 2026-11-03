@@ -21,7 +21,7 @@ export default async function DepoimentosCarousel() {
               Histórias reais
             </span>
             <h2 className="font-poppins font-bold text-3xl md:text-4xl text-path-navy mb-4">Histórias de Sucesso</h2>
-            <p className="text-path-slate text-base">Angolanos que realizaram o sonho de estudar no exterior</p>
+            <p className="text-path-slate text-base">Estudantes que realizaram o sonho de estudar no exterior</p>
           </div>
         </ScrollReveal>
         <ScrollReveal>

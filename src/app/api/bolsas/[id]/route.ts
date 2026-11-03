@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
+import { bolsaPublicadaWhere, calcularStatus } from '@/lib/bolsas';
 
 const cuidOrSlugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/i;
 
@@ -12,18 +13,18 @@ const updateSchema = z.object({
   pais: z.string().min(2).optional(),
   paisCode: z.string().length(2).optional(),
   bandeira: z.string().optional(),
-  nivel: z.string().optional(),
-  area: z.string().optional(),
-  tipo: z.enum(['TOTAL', 'PARCIAL', 'PESQUISA', 'INTERCAMBIO']).optional(),
-  prazo: z.string().datetime().optional(),
+  nivel: z.string().min(1).nullable().optional(),
+  area: z.string().min(1).nullable().optional(),
+  tipo: z.enum(['TOTAL', 'PARCIAL', 'PESQUISA', 'INTERCAMBIO']).nullable().optional(),
+  prazo: z.string().datetime().nullable().optional(),
   dataAbertura: z.string().datetime().optional().nullable(),
   duracao: z.string().optional(),
   valor: z.string().optional(),
   descricao: z.string().min(10).optional(),
   requisitos: z.array(z.string()).optional(),
   documentos: z.array(z.string()).optional(),
-  linkOficial: z.string().url().optional(),
-  status: z.enum(['ABERTA', 'FECHADA', 'URGENTE', 'EM_BREVE']).optional(),
+  linkOficial: z.string().url().nullable().optional(),
+  paisesElegiveis: z.array(z.string().min(1)).optional(),
   destaque: z.boolean().optional(),
 });
 
@@ -43,8 +44,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const validation = validateId(id);
     if (!validation.ok) return validation.response;
 
+    const session = await auth();
+    const isAdmin = session?.user.role === 'ADMIN';
+
     const bolsa = await db.bolsa.findFirst({
-      where: { OR: [{ id }, { slug: id }] },
+      where: { OR: [{ id }, { slug: id }], ...(isAdmin ? {} : bolsaPublicadaWhere) },
       include: { processo: { orderBy: { passo: 'asc' } }, dicas: true },
     });
 
@@ -75,14 +79,21 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!validation.ok) return validation.response;
 
     const body = await req.json();
-    const data = updateSchema.parse(body);
+    const { prazo, dataAbertura, ...data } = updateSchema.parse(body);
+
+    const atual = await db.bolsa.findUnique({ where: { id }, select: { prazo: true, dataAbertura: true } });
+    if (!atual) return NextResponse.json({ error: 'Não encontrada' }, { status: 404 });
+
+    const prazoDate = prazo === undefined ? atual.prazo : prazo ? new Date(prazo) : null;
+    const aberturaDate = dataAbertura === undefined ? atual.dataAbertura : dataAbertura ? new Date(dataAbertura) : null;
 
     const bolsa = await db.bolsa.update({
       where: { id },
       data: {
         ...data,
-        ...(data.prazo ? { prazo: new Date(data.prazo) } : {}),
-        ...(data.dataAbertura !== undefined ? { dataAbertura: data.dataAbertura ? new Date(data.dataAbertura) : null } : {}),
+        prazo: prazoDate,
+        dataAbertura: aberturaDate,
+        status: calcularStatus({ prazo: prazoDate, dataAbertura: aberturaDate }),
       },
       include: { processo: true, dicas: true },
     });

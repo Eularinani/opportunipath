@@ -44,7 +44,7 @@ export default function NewsletterSection() {
             Não Percas Nenhuma Oportunidade
           </h2>
           <p className="text-white/80 text-base max-w-[540px] mx-auto mb-8">
-            Subscreve e recebe alertas semanais de novas bolsas, prazos a aproximar e dicas exclusivas para angolanos.
+            Subscreve e recebe alertas semanais de novas bolsas, prazos a aproximar e dicas para a tua candidatura.
           </p>
           <form
             onSubmit={handleSubmit}

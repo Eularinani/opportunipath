@@ -17,18 +17,19 @@ const bolsaSchema = z.object({
   pais: z.string().min(2, 'País obrigatório'),
   paisCode: z.string().length(2, 'Código de país deve ter 2 caracteres'),
   bandeira: z.string().min(1, 'Bandeira obrigatória'),
-  nivel: z.string().min(1, 'Nível obrigatório'),
-  area: z.string().min(1, 'Área obrigatória'),
-  tipo: z.enum(['TOTAL', 'PARCIAL', 'PESQUISA', 'INTERCAMBIO']),
-  prazo: z.string().min(1, 'Prazo obrigatório'),
+  // Campos que a fonte oficial pode não indicar: vazio = "por confirmar"
+  nivel: z.string(),
+  area: z.string(),
+  tipo: z.enum(['TOTAL', 'PARCIAL', 'PESQUISA', 'INTERCAMBIO', '']),
+  prazo: z.string(),
   dataAbertura: z.string().optional(),
   duracao: z.string().min(1, 'Duração obrigatória'),
   valor: z.string().min(1, 'Valor obrigatório'),
   descricao: z.string().min(10, 'Descrição muito curta'),
   requisitos: z.array(z.string()),
   documentos: z.array(z.string()),
-  linkOficial: z.string().url('Link oficial inválido'),
-  status: z.enum(['ABERTA', 'FECHADA', 'URGENTE', 'EM_BREVE']),
+  linkOficial: z.string().url('Link oficial inválido').or(z.literal('')),
+  paisesElegiveis: z.string(),
   destaque: z.boolean().default(false),
   processo: z.array(z.object({
     passo: z.number().int().positive(),
@@ -50,6 +51,16 @@ interface BolsaFormProps {
 }
 
 const niveis = ['Licenciatura', 'Mestrado', 'Doutoramento', 'Pós-Doutoramento', 'Curta Duração'];
+
+function toIsoOrNull(value?: string): string | null {
+  return value ? new Date(value).toISOString() : null;
+}
+
+function toLocalInput(date: Date | string | null | undefined): string {
+  if (!date) return '';
+  const d = new Date(date);
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
 const areas = ['Engenharia', 'Ciências', 'Humanidades', 'Negócios', 'Saúde', 'Artes', 'Tecnologia', 'Direito', 'Outra'];
 
 export default function BolsaForm({ initialData, mode }: BolsaFormProps) {
@@ -65,16 +76,16 @@ export default function BolsaForm({ initialData, mode }: BolsaFormProps) {
     bandeira: initialData?.bandeira ?? '',
     nivel: initialData?.nivel ?? '',
     area: initialData?.area ?? '',
-    tipo: (initialData?.tipo as BolsaFormData['tipo']) ?? 'TOTAL',
-    prazo: initialData ? new Date(initialData.prazo).toISOString().slice(0, 16) : '',
-    dataAbertura: initialData?.dataAbertura ? new Date(initialData.dataAbertura).toISOString().slice(0, 16) : '',
+    tipo: (initialData?.tipo as BolsaFormData['tipo']) ?? '',
+    prazo: toLocalInput(initialData?.prazo),
+    dataAbertura: toLocalInput(initialData?.dataAbertura),
     duracao: initialData?.duracao ?? '',
     valor: initialData?.valor ?? '',
     descricao: initialData?.descricao ?? '',
     requisitos: initialData?.requisitos ?? [],
     documentos: initialData?.documentos ?? [],
     linkOficial: initialData?.linkOficial ?? '',
-    status: (initialData?.status as BolsaFormData['status']) ?? 'ABERTA',
+    paisesElegiveis: initialData?.paisesElegiveis.join(', ') ?? '',
     destaque: initialData?.destaque ?? false,
     processo: initialData?.processo.map((p) => ({
       passo: p.passo,
@@ -171,12 +182,26 @@ export default function BolsaForm({ initialData, mode }: BolsaFormProps) {
       return;
     }
 
+    const d = result.data;
+    const payload = {
+      ...d,
+      nivel: d.nivel || null,
+      area: d.area || null,
+      tipo: d.tipo || null,
+      prazo: toIsoOrNull(d.prazo),
+      dataAbertura: toIsoOrNull(d.dataAbertura),
+      linkOficial: d.linkOficial || null,
+      paisesElegiveis: d.paisesElegiveis.split(',').map((p) => p.trim()).filter(Boolean),
+      requisitos: d.requisitos.map((r) => r.trim()).filter(Boolean),
+      documentos: d.documentos.map((r) => r.trim()).filter(Boolean),
+    };
+
     try {
       const url = mode === 'create' ? '/api/bolsas' : `/api/bolsas/${initialData?.id}`;
       const res = await fetch(url, {
         method: mode === 'create' ? 'POST' : 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(payload),
       });
 
       const json = await res.json();
@@ -185,7 +210,11 @@ export default function BolsaForm({ initialData, mode }: BolsaFormProps) {
         return;
       }
 
-      toast.success(mode === 'create' ? 'Bolsa criada com sucesso!' : 'Bolsa atualizada com sucesso!');
+      toast.success(
+        mode === 'create'
+          ? 'Bolsa criada como rascunho. Verifica-a na fonte oficial e publica-a na lista de bolsas.'
+          : 'Bolsa atualizada com sucesso!'
+      );
       router.push('/admin/bolsas');
       router.refresh();
     } finally {
@@ -249,24 +278,25 @@ export default function BolsaForm({ initialData, mode }: BolsaFormProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nível *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nível</label>
               <select value={form.nivel} onChange={(e) => updateField('nivel', e.target.value)} className={fieldClass('nivel')}>
-                <option value="">Selecionar...</option>
+                <option value="">Por confirmar</option>
                 {niveis.map((n) => <option key={n} value={n}>{n}</option>)}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Área *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Área</label>
               <select value={form.area} onChange={(e) => updateField('area', e.target.value)} className={fieldClass('area')}>
-                <option value="">Selecionar...</option>
+                <option value="">Por confirmar</option>
                 {areas.map((a) => <option key={a} value={a}>{a}</option>)}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
               <select value={form.tipo} onChange={(e) => updateField('tipo', e.target.value as BolsaFormData['tipo'])} className={fieldClass('tipo')}>
+                <option value="">Por confirmar</option>
                 <option value="TOTAL">Total</option>
                 <option value="PARCIAL">Parcial</option>
                 <option value="PESQUISA">Pesquisa</option>
@@ -275,14 +305,19 @@ export default function BolsaForm({ initialData, mode }: BolsaFormProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
-              <select value={form.status} onChange={(e) => updateField('status', e.target.value as BolsaFormData['status'])} className={fieldClass('status')}>
-                <option value="ABERTA">Aberta</option>
-                <option value="FECHADA">Fechada</option>
-                <option value="URGENTE">Urgente</option>
-                <option value="EM_BREVE">Abre em Breve</option>
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Países / nacionalidades elegíveis</label>
+              <Input
+                value={form.paisesElegiveis}
+                onChange={(e) => updateField('paisesElegiveis', e.target.value)}
+                placeholder="Ex.: Todos os países, Países da CPLP, Angola, Moçambique"
+                className={fieldClass('paisesElegiveis')}
+              />
+              <p className="text-xs text-gray-400 mt-1">Separados por vírgula, tal como indicado na fonte oficial. Vazio = não especificado.</p>
             </div>
+
+            <p className="text-xs text-gray-500 md:col-span-2">
+              O estado (aberta, urgente, encerrada, abre em breve) é calculado automaticamente a partir do prazo e da data de abertura.
+            </p>
 
             <div className="flex items-center gap-2 md:col-span-2">
               <input
@@ -300,8 +335,9 @@ export default function BolsaForm({ initialData, mode }: BolsaFormProps) {
         <TabsContent value="detalhes" className="space-y-4 bg-white p-6 rounded-xl border border-gray-100">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Prazo *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Prazo</label>
               <Input type="datetime-local" value={form.prazo} onChange={(e) => updateField('prazo', e.target.value)} className={fieldClass('prazo')} />
+              <p className="text-xs text-gray-400 mt-1">Deixa vazio se a fonte oficial não indicar prazo.</p>
             </div>
 
             <div>
@@ -320,8 +356,16 @@ export default function BolsaForm({ initialData, mode }: BolsaFormProps) {
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Link oficial *</label>
-              <Input value={form.linkOficial} onChange={(e) => updateField('linkOficial', e.target.value)} className={fieldClass('linkOficial')} />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Link oficial (obrigatório para publicar)</label>
+              <Input value={form.linkOficial} onChange={(e) => updateField('linkOficial', e.target.value)} placeholder="Página da bolsa no site da instituição/financiador" className={fieldClass('linkOficial')} />
+              {errors.linkOficial && <p className="text-xs text-red-500 mt-1">{errors.linkOficial}</p>}
+              {initialData?.urlOriginal && (
+                <p className="text-xs text-gray-400 mt-1">
+                  Importada de:{' '}
+                  <a href={initialData.urlOriginal} target="_blank" rel="noopener noreferrer" className="underline">{initialData.urlOriginal}</a>
+                  {' '}— usa esta página só para encontrares a fonte oficial.
+                </p>
+              )}
             </div>
 
             <div className="md:col-span-2">

@@ -8,17 +8,18 @@ import SearchBar from '@/components/shared/SearchBar';
 import NewsletterSection from '@/components/sections/NewsletterSection';
 import DepoimentosCarousel from '@/components/sections/DepoimentosCarousel';
 import { cn } from '@/lib/utils';
+import { bolsaAtivaWhere, bolsaPublicadaWhere, statusWhere } from '@/lib/bolsas';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'OportuniPath — O Teu Caminho para o Mundo',
-  description: 'Descobre bolsas de estudo internacionais para angolanos. De cursos de línguas a Doutoramento, em qualquer parte do mundo.',
+  description: 'Descobre bolsas de estudo internacionais verificadas, para estudantes de qualquer país. De cursos de línguas a Doutoramento, em qualquer parte do mundo.',
 };
 
 async function getHomeStats() {
   const [totalBolsas, totalPaises, totalGuias, totalSubscribers] = await Promise.all([
-    db.bolsa.count({ where: { status: { not: 'FECHADA' } } }),
-    db.bolsa.groupBy({ by: ['pais'] }).then((r) => r.length),
+    db.bolsa.count({ where: bolsaAtivaWhere() }),
+    db.bolsa.groupBy({ by: ['pais'], where: bolsaAtivaWhere() }).then((r) => r.length),
     db.guia.count({ where: { publicado: true } }),
     db.newsletterSubscriber.count({ where: { ativo: true } }),
   ]);
@@ -35,7 +36,7 @@ async function getPaisesComBolsas() {
   return db.bolsa.groupBy({
     by: ['pais', 'bandeira'],
     _count: { id: true },
-    where: { status: { not: 'FECHADA' } },
+    where: bolsaAtivaWhere(),
     orderBy: { _count: { id: 'desc' } },
     take: 6,
   });
@@ -43,8 +44,8 @@ async function getPaisesComBolsas() {
 
 async function getBolsasDestaque() {
   return db.bolsa.findMany({
-    where: { destaque: true, status: { not: 'FECHADA' } },
-    orderBy: { prazo: 'asc' },
+    where: { ...bolsaAtivaWhere(), destaque: true },
+    orderBy: { prazo: { sort: 'asc', nulls: 'last' } },
     take: 3,
     include: { processo: true, dicas: true },
   });
@@ -52,7 +53,7 @@ async function getBolsasDestaque() {
 
 async function getBolsasEmBreve() {
   return db.bolsa.findMany({
-    where: { status: 'EM_BREVE' },
+    where: { AND: [bolsaPublicadaWhere, statusWhere('EM_BREVE')] },
     orderBy: { dataAbertura: 'asc' },
     take: 3,
     include: { processo: true, dicas: true },
@@ -61,8 +62,8 @@ async function getBolsasEmBreve() {
 
 async function getBolsasIntercambio() {
   return db.bolsa.findMany({
-    where: { tipo: 'INTERCAMBIO', status: { not: 'FECHADA' } },
-    orderBy: { prazo: 'asc' },
+    where: { ...bolsaAtivaWhere(), tipo: 'INTERCAMBIO' },
+    orderBy: { prazo: { sort: 'asc', nulls: 'last' } },
     take: 3,
     include: { processo: true, dicas: true },
   });
@@ -100,7 +101,7 @@ const tiposBolsa = [
 ];
 
 const passos = [
-  { num: 1, titulo: 'Pesquisa', descricao: 'Explora centenas de bolsas filtradas por país, nível e área de estudo.' },
+  { num: 1, titulo: 'Pesquisa', descricao: 'Explora bolsas filtradas por país, nível e área de estudo.' },
   { num: 2, titulo: 'Compara', descricao: 'Compara requisitos, prazos e benefícios para encontrar a ideal.' },
   { num: 3, titulo: 'Prepara', descricao: 'Usa os nossos guias para preparar todos os documentos necessários.' },
   { num: 4, titulo: 'Candidata', descricao: 'Segue o link oficial e candidata-te com confiança.' },
@@ -128,14 +129,14 @@ export default async function HomePage() {
           <div className="max-w-[800px] mx-auto space-y-6">
             <span className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/15 text-white text-sm font-medium px-4 py-1.5 rounded-full">
               <Sparkles className="w-4 h-4 text-path-teal" />
-              Bolsas selecionadas para angolanos
+              Bolsas verificadas na fonte oficial
             </span>
             <h1 className="font-poppins font-extrabold text-4xl md:text-6xl lg:text-7xl text-white leading-tight">
               O Teu Caminho <span className="text-transparent bg-clip-text bg-gradient-teal">Internacional</span>
             </h1>
             <p className="text-white/80 text-base md:text-lg max-w-[640px] mx-auto leading-relaxed">
               Descobre bolsas totais, parciais, de pesquisa e programas de intercâmbio. 
-              De Angola para qualquer parte do mundo.
+              Estejas onde estiveres, para qualquer parte do mundo.
             </p>
             <SearchBar variant="hero" className="max-w-[700px] mx-auto" />
             <div className="flex items-center justify-center gap-6 md:gap-10 text-white">
@@ -320,7 +321,7 @@ export default async function HomePage() {
                 Explora o mundo
               </span>
               <h2 className="font-poppins font-bold text-3xl md:text-4xl text-path-navy mb-4">Bolsas por País</h2>
-              <p className="text-path-slate text-base">Encontra oportunidades nos destinos mais populares para angolanos</p>
+              <p className="text-path-slate text-base">Encontra oportunidades nos destinos com mais bolsas abertas</p>
             </div>
           </ScrollReveal>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">

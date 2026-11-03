@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import HeroSection from '@/components/sections/HeroSection';
 import ScrollReveal from '@/components/shared/ScrollReveal';
-import { documentosBasicos, processoAutenticacao, guiasDocumentos, paisesDocumento } from '@/data/documentos';
+import { documentosBasicos, processoAutenticacao, guiasDocumentos, paisesDocumento, GUIA_DOCUMENTOS_REVISTO_EM } from '@/data/documentos';
+import { formatDate } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 
@@ -79,8 +80,8 @@ export default function DocumentosPage() {
   return (
     <main>
       <HeroSection
-        title="Guia de Documentos para Angolanos"
-        description="Tudo o que precisas saber sobre como preparar e autenticar os teus documentos para candidaturas internacionais. De Angola para o mundo."
+        title="Guia de Documentos"
+        description="Como preparar e autenticar os teus documentos para candidaturas internacionais. O processo de autenticação descrito aplica-se a documentos emitidos em Angola — noutros países, confirma junto do Ministério da Educação local."
         breadcrumb={[
           { label: 'Início', href: '/' },
           { label: 'Documentos', href: '/documentos' },
@@ -162,7 +163,7 @@ export default function DocumentosPage() {
               >
                 <ScrollReveal>
                   <h3 className="font-poppins font-semibold text-xl text-path-navy mb-4">
-                    Processo de Autenticação em Angola
+                    Processo de Autenticação (documentos emitidos em Angola)
                   </h3>
                   <div className="relative pl-8 border-l-2 border-path-cream space-y-8">
                     {processoAutenticacao.map((step) => (
@@ -221,6 +222,22 @@ export default function DocumentosPage() {
                     <div className="text-path-slate-dark text-sm leading-relaxed whitespace-pre-line">
                       {guia.reconhecimentoDiplomas}
                     </div>
+                  </div>
+                  <div className="mt-4 text-xs text-path-slate space-y-1">
+                    <p className="font-semibold text-path-navy">Fontes oficiais</p>
+                    <ul className="list-disc pl-5 space-y-0.5">
+                      {guia.fontes.map((f) => (
+                        <li key={f.url}>
+                          <a href={f.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-path-teal">
+                            {f.titulo}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                    <p>
+                      Revisto em {formatDate(GUIA_DOCUMENTOS_REVISTO_EM)}. Taxas, montantes e requisitos mudam — confirma
+                      sempre na fonte oficial e no edital da tua bolsa.
+                    </p>
                   </div>
                 </ScrollReveal>
               </div>

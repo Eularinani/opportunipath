@@ -1,7 +1,7 @@
 # OportuniPath
 
 <p align="center">
-  <strong>Conectando talento angolano a oportunidades de estudo no mundo inteiro.</strong>
+  <strong>Conectando talento de todo o mundo a oportunidades de estudo verificadas.</strong>
 </p>
 
 <p align="center">
@@ -23,9 +23,9 @@
 
 ## O que é o OportuniPath?
 
-O **OportuniPath** é uma plataforma digital angolana dedicada a reunir, organizar e divulgar **bolsas de estudo internacionais** para estudantes angolanos.
+O **OportuniPath** é uma plataforma digital, nascida em Angola, dedicada a reunir, verificar e divulgar **bolsas de estudo internacionais** para estudantes de qualquer país.
 
-Acreditamos que a educação é o caminho mais seguro para o desenvolvimento de Angola. Por isso, criámos um espaço onde qualquer angolano pode descobrir oportunidades de estudo — desde cursos de línguas e licenciaturas até mestrados, doutoramentos e bolsas de pesquisa — em qualquer parte do mundo.
+Acreditamos que a educação é o caminho mais seguro para o desenvolvimento. Por isso, criámos um espaço onde qualquer estudante pode descobrir oportunidades de estudo — desde cursos de línguas e licenciaturas até mestrados, doutoramentos e bolsas de pesquisa — em qualquer parte do mundo.
 
 ## Qual é o fim/objetivo?
 
@@ -36,7 +36,7 @@ O nosso objetivo é **democratizar o acesso à informação sobre bolsas de estu
 - Desconhecimento dos requisitos e documentos necessários;
 - Prazos perdidos por falta de alertas.
 
-Queremos que mais angolanos consigam estudar no exterior e regressem ao país com conhecimento para contribuir no seu desenvolvimento.
+Queremos que mais estudantes consigam estudar no exterior e regressem aos seus países com conhecimento para contribuir no seu desenvolvimento.
 
 ---
 

@@ -7,7 +7,7 @@ import BolsasPaginacao from '@/components/bolsas/BolsasPaginacao';
 
 export const metadata: Metadata = {
   title: 'Bolsas de Estudo',
-  description: 'Encontra e filtra bolsas de estudo internacionais para angolanos por país, nível, área e prazo.',
+  description: 'Encontra e filtra bolsas de estudo internacionais verificadas por país, nível, área e prazo.',
 };
 
 interface BolsasPageProps {
@@ -48,7 +48,7 @@ export default async function BolsasPage({ searchParams }: BolsasPageProps) {
             Bolsas de Estudo
           </h1>
           <p className="text-white/70 text-base mb-8">
-            {result.total} bolsas disponíveis para estudantes angolanos
+            {result.total} {result.total === 1 ? 'bolsa verificada' : 'bolsas verificadas'}
           </p>
           <SearchBar variant="hero" className="max-w-2xl" defaultValue={params.q} />
         </div>

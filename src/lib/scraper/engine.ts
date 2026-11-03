@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { translateToPortuguese, detectLanguage } from './translator';
 import { normalizeBolsa } from './normalizer';
 import { Scholars4DevSource } from './sources/scholars4dev';
+import { atualizarStatusBolsas } from '@/lib/bolsas';
 import type { ScraperResult, ScraperSource, ScrapedBolsa } from './types';
 
 const sources: ScraperSource[] = [
@@ -70,18 +71,23 @@ async function syncSource(source: ScraperSource): Promise<ScraperResult> {
         : null;
 
       if (existing) {
-        await db.bolsa.update({
-          where: { id: existing.id },
-          data: {
-            titulo: normalized.titulo,
-            descricao: normalized.descricao,
-            prazo: normalized.prazo,
-            status: normalized.status,
-            valor: normalized.valor,
-            duracao: normalized.duracao,
-            sincronizadoEm: new Date(),
-          },
-        });
+        // Bolsas já revistas por um admin não são sobrescritas por dados importados
+        if (existing.estadoRevisao === 'RASCUNHO') {
+          await db.bolsa.update({
+            where: { id: existing.id },
+            data: {
+              titulo: normalized.titulo,
+              descricao: normalized.descricao,
+              prazo: normalized.prazo,
+              status: normalized.status,
+              valor: normalized.valor,
+              duracao: normalized.duracao,
+              sincronizadoEm: new Date(),
+            },
+          });
+        } else {
+          await db.bolsa.update({ where: { id: existing.id }, data: { sincronizadoEm: new Date() } });
+        }
         atualizadas++;
       } else {
         await db.bolsa.create({
@@ -105,6 +111,7 @@ async function syncSource(source: ScraperSource): Promise<ScraperResult> {
             linkOficial: normalized.linkOficial,
             status: normalized.status,
             destaque: false,
+            estadoRevisao: 'RASCUNHO',
             fonteId: fonte.id,
             urlOriginal: normalized.urlOriginal,
             importadoEm: new Date(),
@@ -141,6 +148,8 @@ export async function runScraper(): Promise<ScraperResult[]> {
       results.push({ fonte: source.nome, total: 0, novas: 0, atualizadas: 0, falhas: 1 });
     }
   }
+
+  await atualizarStatusBolsas();
 
   return results;
 }

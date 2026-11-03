@@ -109,28 +109,22 @@ export class Scholars4DevSource implements ScraperSource {
     const text = stripHtml(content);
 
     const deadlineText = text.match(/(deadline|closes?|applications? close|due).{0,60}(\d{1,2}\s+[A-Za-z]{3,}\s+\d{4}|\d{4}-\d{2}-\d{2}|[A-Za-z]{3,}\s+\d{1,2}(st|nd|rd|th)?,?\s+\d{4})/i)?.[0];
-    const prazo = parseDeadline(deadlineText ?? text);
+    // Só aceita uma data que apareça junto a "deadline"/"closes" — qualquer outra data
+    // no texto (publicação, início do curso…) não é o prazo.
+    const prazo = parseDeadline(deadlineText);
 
     const paisMatch = text.match(/(?:study\s+in|country|location)\s*:?\s*([A-Za-z\s]{3,40})(?:\n|\.|,|\(|;)/i);
     const pais = paisMatch?.[1]?.trim();
-
-    const nivel = text.toLowerCase().includes('phd') || text.toLowerCase().includes('doctoral')
-      ? 'Doutoramento'
-      : text.toLowerCase().includes('master') || text.toLowerCase().includes('masters')
-      ? 'Mestrado'
-      : text.toLowerCase().includes('bachelor') || text.toLowerCase().includes('undergraduate')
-      ? 'Licenciatura'
-      : 'Mestrado';
 
     const descricao = text.length > 30 ? text.slice(0, 800) : titulo;
 
     return {
       titulo,
+      // O link é do artigo no agregador, não da instituição; o normalizer deixa linkOficial vazio
       linkOficial: link,
       urlOriginal: link,
       idiomaOriginal: 'en',
       pais: pais && pais.length < 40 ? pais : undefined,
-      nivel,
       prazo,
       descricao,
     };

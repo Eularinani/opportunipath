@@ -5,14 +5,16 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function getPrazoColor(prazo: Date | string): string {
+export function getPrazoColor(prazo: Date | string | null): string {
+  if (!prazo) return 'text-path-slate';
   const dias = Math.ceil((new Date(prazo).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
   if (dias < 7) return 'text-path-rose';
   if (dias < 30) return 'text-path-amber';
   return 'text-path-teal';
 }
 
-export function getPrazoLabel(prazo: Date | string): string {
+export function getPrazoLabel(prazo: Date | string | null): string {
+  if (!prazo) return 'Prazo por confirmar';
   const dias = Math.ceil((new Date(prazo).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
   if (dias < 0) return 'Encerrado';
   if (dias === 0) return 'Encerra hoje';
@@ -41,7 +43,8 @@ export function slugify(text: string): string {
     .trim();
 }
 
-export function tipoBolsaLabel(tipo: string): string {
+export function tipoBolsaLabel(tipo: string | null): string {
+  if (!tipo) return 'Tipo por confirmar';
   const map: Record<string, string> = {
     TOTAL: 'Bolsa Total',
     PARCIAL: 'Bolsa Parcial',
@@ -51,7 +54,8 @@ export function tipoBolsaLabel(tipo: string): string {
   return map[tipo] ?? tipo;
 }
 
-export function tipoBolsaColor(tipo: string): string {
+export function tipoBolsaColor(tipo: string | null): string {
+  if (!tipo) return 'bg-path-cream text-path-slate';
   const map: Record<string, string> = {
     TOTAL: 'bg-path-teal/10 text-path-teal',
     PARCIAL: 'bg-path-amber/10 text-path-amber',

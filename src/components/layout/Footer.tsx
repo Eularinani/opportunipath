@@ -62,12 +62,12 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-white/60 text-sm leading-relaxed max-w-[280px]">
-              Conectamos talento angolano a oportunidades de estudo no mundo inteiro. O teu caminho começa aqui.
+              Conectamos talento de todo o mundo a oportunidades de estudo verificadas. O teu caminho começa aqui.
             </p>
             <div className="flex items-center gap-4 mt-6">
-              <a href="#" className="text-white/50 hover:text-path-teal transition-colors text-sm">Facebook</a>
-              <a href="#" className="text-white/50 hover:text-path-teal transition-colors text-sm">Instagram</a>
-              <a href="#" className="text-white/50 hover:text-path-teal transition-colors text-sm">WhatsApp</a>
+              <a href="https://securadist.com" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-path-teal transition-colors text-sm">
+                Um projeto SecuraDist
+              </a>
             </div>
           </div>
 
@@ -121,7 +121,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-white/10 mt-14 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-white/40 text-xs">&copy; 2025 OportuniPath. Todos os direitos reservados.</p>
+          <p className="text-white/40 text-xs">&copy; {new Date().getFullYear()} OportuniPath · SecuraDist. Todos os direitos reservados.</p>
           <div className="flex items-center gap-4 text-white/40 text-xs">
             <a href="#" className="hover:text-path-teal transition-colors">Termos de Uso</a>
             <span>|</span>

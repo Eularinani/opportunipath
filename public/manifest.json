@@ -1,7 +1,7 @@
 {
   "name": "OportuniPath",
   "short_name": "OportuniPath",
-  "description": "Descobre bolsas de estudo internacionais para angolanos.",
+  "description": "Descobre bolsas de estudo internacionais verificadas, para estudantes de qualquer país.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F8FAFC",

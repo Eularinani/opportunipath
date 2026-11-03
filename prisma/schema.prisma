@@ -84,17 +84,21 @@ model Bolsa {
   pais           String
   paisCode       String
   bandeira       String
-  nivel          String
-  area           String
-  tipo           TipoBolsa
-  prazo          DateTime
+  // Campos opcionais: quando a fonte não os indica ficam vazios — nunca adivinhar
+  nivel          String?
+  area           String?
+  tipo           TipoBolsa?
+  prazo          DateTime?
   dataAbertura   DateTime?
   duracao        String
   valor          String
   descricao      String      @db.Text
   requisitos     String[]
   documentos     String[]
-  linkOficial    String
+  linkOficial    String?
+  // Nacionalidades/regiões elegíveis, tal como indicadas pela fonte oficial (vazio = não especificado)
+  paisesElegiveis String[]   @default([])
+  // Cache do estado calculado a partir de prazo/dataAbertura (ver src/lib/bolsas.ts)
   status         StatusBolsa @default(ABERTA)
   destaque       Boolean     @default(false)
   visualizacoes  Int         @default(0)
@@ -109,6 +113,11 @@ model Bolsa {
   idiomaOriginal String?
   sincronizadoEm DateTime?
 
+  // Verificação humana: só bolsas PUBLICADA aparecem no site
+  estadoRevisao  EstadoRevisao @default(RASCUNHO)
+  verificadoEm   DateTime?
+  verificadoPor  String?
+
   processo ProcessoStep[]
   dicas    Dica[]
 
@@ -119,6 +128,7 @@ model Bolsa {
   @@index([destaque])
   @@index([prazo])
   @@index([fonteId])
+  @@index([estadoRevisao])
 }
 
 model ProcessoStep {
@@ -144,6 +154,12 @@ enum TipoBolsa {
   PARCIAL
   PESQUISA
   INTERCAMBIO
+}
+
+enum EstadoRevisao {
+  RASCUNHO
+  PUBLICADA
+  ARQUIVADA
 }
 
 enum StatusBolsa {

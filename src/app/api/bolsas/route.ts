@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import { searchBolsas } from '@/lib/search';
 import { slugify } from '@/lib/utils';
+import { calcularStatus } from '@/lib/bolsas';
 import { z } from 'zod';
 
 const orderByValues = ['prazo', 'createdAt', 'visualizacoes'] as const;
@@ -13,22 +14,20 @@ const bolsaSchema = z.object({
   pais: z.string().min(2, 'País obrigatório'),
   paisCode: z.string().length(2, 'Código de país deve ter 2 caracteres'),
   bandeira: z.string().min(1, 'Bandeira obrigatória'),
-  nivel: z.string().min(1, 'Nível obrigatório'),
-  area: z.string().min(1, 'Área obrigatória'),
+  nivel: z.string().min(1).nullable().default(null),
+  area: z.string().min(1).nullable().default(null),
   tipo: z.enum(['TOTAL', 'PARCIAL', 'PESQUISA', 'INTERCAMBIO'], {
     errorMap: () => ({ message: 'Tipo inválido' }),
-  }),
-  prazo: z.string().datetime('Prazo inválido'),
+  }).nullable().default(null),
+  prazo: z.string().datetime('Prazo inválido').nullable().default(null),
   dataAbertura: z.string().datetime().optional().nullable(),
   duracao: z.string().min(1, 'Duração obrigatória'),
   valor: z.string().min(1, 'Valor obrigatório'),
   descricao: z.string().min(10, 'Descrição muito curta'),
   requisitos: z.array(z.string()).default([]),
   documentos: z.array(z.string()).default([]),
-  linkOficial: z.string().url('Link oficial inválido'),
-  status: z.enum(['ABERTA', 'FECHADA', 'URGENTE', 'EM_BREVE'], {
-    errorMap: () => ({ message: 'Status inválido' }),
-  }).default('ABERTA'),
+  linkOficial: z.string().url('Link oficial inválido').nullable().default(null),
+  paisesElegiveis: z.array(z.string().min(1)).default([]),
   destaque: z.boolean().default(false),
   processo: z.array(z.object({
     passo: z.number().int().positive(),
@@ -96,13 +95,17 @@ export async function POST(req: NextRequest) {
     const { processo, dicas, prazo, dataAbertura, ...rest } = data;
 
     const slug = `${slugify(data.titulo)}-${Date.now().toString(36)}`;
+    const prazoDate = prazo ? new Date(prazo) : null;
+    const aberturaDate = dataAbertura ? new Date(dataAbertura) : null;
 
+    // Criada como RASCUNHO — só fica pública depois de verificada (POST /api/bolsas/[id]/verificar)
     const bolsa = await db.bolsa.create({
       data: {
         ...rest,
         slug,
-        prazo: new Date(prazo),
-        dataAbertura: dataAbertura ? new Date(dataAbertura) : null,
+        prazo: prazoDate,
+        dataAbertura: aberturaDate,
+        status: calcularStatus({ prazo: prazoDate, dataAbertura: aberturaDate }),
         processo: { create: processo },
         dicas: { create: dicas },
       },

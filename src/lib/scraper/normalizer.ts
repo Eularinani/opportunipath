@@ -1,4 +1,6 @@
 import { slugify } from '@/lib/utils';
+import type { StatusBolsa } from '@prisma/client';
+import { calcularStatus } from '@/lib/bolsas';
 import type { ScrapedBolsa, RawBolsa } from './types';
 
 const PAIS_TO_CODE: Record<string, string> = {
@@ -45,45 +47,38 @@ function getBandeira(code: string): string {
   return BANDEIRAS[code] ?? '🌍';
 }
 
-function inferirTipo(titulo: string, descricao?: string): RawBolsa['tipo'] {
-  const texto = `${titulo} ${descricao ?? ''}`.toLowerCase();
-  if (texto.includes('phd') || texto.includes('doutoramento') || texto.includes('doctoral') || texto.includes('research')) return 'PESQUISA';
-  if (texto.includes('language') || texto.includes('língua') || texto.includes('exchange') || texto.includes('intercâmbio') || texto.includes('summer school')) return 'INTERCAMBIO';
-  if (texto.includes('partial') || texto.includes('parcial') || texto.includes('tuition waiver') || texto.includes('fee waiver')) return 'PARCIAL';
-  return 'TOTAL';
+// As inferências abaixo só devolvem um valor quando há uma palavra-chave clara
+// (com limites de palavra). Sem certeza → null, e o admin preenche na revisão.
+function contem(texto: string, ...termos: string[]): boolean {
+  return termos.some((t) => new RegExp(`\\b${t}\\b`, 'i').test(texto));
 }
 
-function inferirNivel(titulo: string, descricao?: string): string {
-  const texto = `${titulo} ${descricao ?? ''}`.toLowerCase();
-  if (texto.includes('phd') || texto.includes('doutoramento') || texto.includes('doctoral')) return 'Doutoramento';
-  if (texto.includes('master') || texto.includes('mestrado') || texto.includes('msc') || texto.includes('ma ')) return 'Mestrado';
-  if (texto.includes('bachelor') || texto.includes('licenciatura') || texto.includes('undergraduate')) return 'Licenciatura';
-  if (texto.includes('language') || texto.includes('língua') || texto.includes('summer school')) return 'Curso de Línguas';
-  if (texto.includes('postdoctoral') || texto.includes('pós-doutoramento')) return 'Pós-Doutoramento';
-  return 'Mestrado';
+function inferirTipo(titulo: string, descricao?: string): NonNullable<RawBolsa['tipo']> | null {
+  const texto = `${titulo} ${descricao ?? ''}`;
+  if (contem(texto, 'fully[- ]funded', 'full scholarships?', 'bolsa integral', 'bolsa total')) return 'TOTAL';
+  if (contem(texto, 'partial scholarships?', 'partially funded', 'bolsa parcial', 'tuition waiver', 'fee waiver')) return 'PARCIAL';
+  if (contem(texto, 'research fellowships?', 'research grants?')) return 'PESQUISA';
+  if (contem(texto, 'exchange programme', 'exchange program', 'interc[aâ]mbio', 'summer school', 'language course')) return 'INTERCAMBIO';
+  return null;
 }
 
-function inferirArea(titulo: string, descricao?: string): string {
-  const texto = `${titulo} ${descricao ?? ''}`.toLowerCase();
-  if (texto.includes('engenharia') || texto.includes('engineering')) return 'Engenharia';
-  if (texto.includes('medicina') || texto.includes('medicine') || texto.includes('saúde') || texto.includes('health')) return 'Ciências da Saúde';
-  if (texto.includes('negócios') || texto.includes('business') || texto.includes('mba') || texto.includes('gestão')) return 'Negócios';
-  if (texto.includes('tecnologia') || texto.includes('technology') || texto.includes('computer') || texto.includes('it ')) return 'Tecnologia';
-  if (texto.includes('ciências sociais') || texto.includes('social science') || texto.includes('sociology')) return 'Ciências Sociais';
-  if (texto.includes('direito') || texto.includes('law')) return 'Direito';
-  if (texto.includes('arte') || texto.includes('art')) return 'Artes';
-  if (texto.includes('ciência') || texto.includes('science')) return 'Ciências';
-  return 'Geral';
+function inferirNivel(titulo: string, descricao?: string): string | null {
+  const texto = `${titulo} ${descricao ?? ''}`;
+  if (contem(texto, 'postdoctoral', 'post-doctoral', 'pós-doutoramento')) return 'Pós-Doutoramento';
+  if (contem(texto, 'phd', 'doctoral', 'doutoramento')) return 'Doutoramento';
+  if (contem(texto, 'masters?', 'mestrado', 'msc', 'mba', 'llm')) return 'Mestrado';
+  if (contem(texto, 'bachelor', 'undergraduate', 'licenciatura')) return 'Licenciatura';
+  return null;
 }
 
-function inferirStatus(prazo?: Date | string | null): RawBolsa['status'] {
-  if (!prazo) return 'ABERTA';
-  const data = new Date(prazo);
-  if (isNaN(data.getTime())) return 'ABERTA';
-  const dias = Math.ceil((data.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-  if (dias < 0) return 'FECHADA';
-  if (dias < 14) return 'URGENTE';
-  return 'ABERTA';
+function inferirArea(titulo: string, descricao?: string): string | null {
+  const texto = `${titulo} ${descricao ?? ''}`;
+  if (contem(texto, 'engineering', 'engenharia')) return 'Engenharia';
+  if (contem(texto, 'medicine', 'medicina', 'public health', 'saúde pública', 'nursing')) return 'Saúde';
+  if (contem(texto, 'business', 'mba', 'management', 'gestão', 'negócios')) return 'Negócios';
+  if (contem(texto, 'computer science', 'information technology', 'informática', 'data science')) return 'Tecnologia';
+  if (contem(texto, 'law', 'direito', 'llm')) return 'Direito';
+  return null;
 }
 
 function parseDate(input?: string | Date | null): Date | null {
@@ -100,18 +95,18 @@ export interface NormalizedBolsa {
   pais: string;
   paisCode: string;
   bandeira: string;
-  nivel: string;
-  area: string;
-  tipo: 'TOTAL' | 'PARCIAL' | 'PESQUISA' | 'INTERCAMBIO';
-  prazo: Date;
+  nivel: string | null;
+  area: string | null;
+  tipo: 'TOTAL' | 'PARCIAL' | 'PESQUISA' | 'INTERCAMBIO' | null;
+  prazo: Date | null;
   dataAbertura: Date | null;
   duracao: string;
   valor: string;
   descricao: string;
   requisitos: string[];
   documentos: string[];
-  linkOficial: string;
-  status: 'ABERTA' | 'FECHADA' | 'URGENTE' | 'EM_BREVE';
+  linkOficial: string | null;
+  status: StatusBolsa;
   urlOriginal: string;
   idiomaOriginal: string;
 }
@@ -121,16 +116,17 @@ export function normalizeBolsa(raw: ScrapedBolsa): NormalizedBolsa {
   const bandeira = raw.bandeira && raw.bandeira !== '🌍' ? raw.bandeira : getBandeira(paisCode);
   const pais = raw.pais && raw.pais.trim() ? raw.pais.trim() : 'Internacional';
 
-  const prazo = parseDate(raw.prazo) ?? new Date(Date.now() + 90 * 24 * 60 * 60 * 1000); // fallback: 90 dias
+  // Sem prazo explícito na fonte → fica vazio ("Prazo por confirmar"), nunca inventado
+  const prazo = parseDate(raw.prazo);
   const dataAbertura = parseDate(raw.dataAbertura);
 
   const titulo = raw.titulo.trim();
   const descricao = (raw.descricao ?? titulo).trim();
 
-  const tipo = (raw.tipo ?? inferirTipo(titulo, descricao)) as NormalizedBolsa['tipo'];
+  const tipo = raw.tipo ?? inferirTipo(titulo, descricao);
   const nivel = raw.nivel ?? inferirNivel(titulo, descricao);
   const area = raw.area ?? inferirArea(titulo, descricao);
-  const status = (raw.status ?? inferirStatus(prazo)) as NormalizedBolsa['status'];
+  const status = calcularStatus({ prazo, dataAbertura });
 
   const slug = `${slugify(titulo)}-${Date.now().toString(36)}`;
 
@@ -151,7 +147,8 @@ export function normalizeBolsa(raw: ScrapedBolsa): NormalizedBolsa {
     descricao,
     requisitos: raw.requisitos?.length ? raw.requisitos : ['Consultar requisitos no site oficial'],
     documentos: raw.documentos?.length ? raw.documentos : ['Consultar documentos no site oficial'],
-    linkOficial: raw.linkOficial,
+    // O link de um agregador não é oficial — o admin indica o oficial na revisão
+    linkOficial: raw.linkOficial && raw.linkOficial !== raw.urlOriginal ? raw.linkOficial : null,
     status,
     urlOriginal: raw.urlOriginal,
     idiomaOriginal: raw.idiomaOriginal,

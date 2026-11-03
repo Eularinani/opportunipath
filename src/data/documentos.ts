@@ -1,46 +1,53 @@
 import type { GuiaDocumento, DocumentoChecklist, ProcessoAuthStep } from './types-documentos';
 
+// Conteúdo revisto em 2026-11-03. Valores (taxas, montantes, níveis de língua) mudam:
+// só se indicam números confirmados numa fonte, sempre com a fonte listada em `fontes`.
+export const GUIA_DOCUMENTOS_REVISTO_EM = '2026-11-03T12:00:00';
+
 export const documentosBasicos: DocumentoChecklist[] = [
-  { id: 'doc-1', nome: 'Certificado de Habilitacoes (original + 2 copias)', descricao: 'Certificado de conclusao do ensino medio ou superior, consoante o nivel da bolsa.', requerAutenticacao: true },
-  { id: 'doc-2', nome: 'Certificado de Nacionalidade Angolana', descricao: 'Documento comprobatorio da nacionalidade angolana.', requerAutenticacao: true },
-  { id: 'doc-3', nome: 'Bilhete de Identidade (copia autenticada)', descricao: 'BI valido com copia autenticada.', requerAutenticacao: true },
-  { id: 'doc-4', nome: 'Passaporte biometrico valido (minimo 6 meses)', descricao: 'Passaporte com validade superior a 6 meses.', requerAutenticacao: false },
-  { id: 'doc-5', nome: 'Certidao de Nascimento', descricao: 'Certidao original ou copia autenticada.', requerAutenticacao: true },
-  { id: 'doc-6', nome: 'Atestado Medico', descricao: 'Atestado de saude emitido por hospital publico ou privado reconhecido.', requerAutenticacao: false },
-  { id: 'doc-7', nome: 'Certidao de Casamento (se aplicavel)', descricao: 'Para candidatos casados que precisam de visto para conjuge.', requerAutenticacao: true },
-  { id: 'doc-8', nome: 'Certificado de Idiomas', descricao: 'IELTS, TOEFL, DELF, TestDaF, HSK, etc., consoante o pais de destino.', requerAutenticacao: false },
+  { id: 'doc-1', nome: 'Certificado de Habilitações (original + cópias)', descricao: 'Certificado de conclusão do ensino secundário ou superior, consoante o nível da bolsa, com notas.', requerAutenticacao: true },
+  { id: 'doc-2', nome: 'Certificado de Nacionalidade', descricao: 'Documento comprovativo da tua nacionalidade (só se a bolsa o exigir).', requerAutenticacao: true },
+  { id: 'doc-3', nome: 'Documento de identificação (cópia certificada)', descricao: 'Bilhete de identidade ou equivalente do teu país.', requerAutenticacao: true },
+  { id: 'doc-4', nome: 'Passaporte válido', descricao: 'Muitos consulados pedem validade de pelo menos 6 meses além da data prevista de entrada; confirma a regra do país de destino.', requerAutenticacao: false },
+  { id: 'doc-5', nome: 'Certidão de Nascimento', descricao: 'Original ou cópia certificada.', requerAutenticacao: true },
+  { id: 'doc-6', nome: 'Atestado / exame médico', descricao: 'Alguns países têm formulário próprio (ex.: China). Costuma ter validade limitada.', requerAutenticacao: false },
+  { id: 'doc-7', nome: 'Certidão de Casamento (se aplicável)', descricao: 'Para quem pede visto também para o cônjuge.', requerAutenticacao: true },
+  { id: 'doc-8', nome: 'Certificado de língua', descricao: 'IELTS, TOEFL, DELF/DALF, TestDaF, DSH, HSK, etc., consoante o país e a língua do curso.', requerAutenticacao: false },
 ];
 
+// Processo para documentos emitidos em Angola.
 export const processoAutenticacao: ProcessoAuthStep[] = [
   {
     passo: 1,
-    titulo: 'Ministerio da Educacao',
-    descricao: 'Leva os originais + copias para autenticacao. O Ministerio certifica que os documentos sao autenticos e foram emitidos por instituicoes reconhecidas.',
-    custo: '5.000 Kz por documento',
-    tempo: '3-5 dias uteis',
+    titulo: 'Autenticação pelo ministério da tutela',
+    descricao: 'Os certificados escolares são autenticados pelo ministério que tutela o nível de ensino: Ministério da Educação (MED) para o ensino geral e Ministério do Ensino Superior, Ciência, Tecnologia e Inovação (MESCTI) para o ensino superior.',
+    custo: 'Consulta a tabela em vigor no serviço',
+    tempo: 'Varia — pede uma estimativa no balcão',
   },
   {
     passo: 2,
-    titulo: 'MIREX (Ministerio das Relacoes Exteriores)',
-    descricao: 'Legalizacao dos documentos ja autenticados pelo Ministerio da Educacao. O MIREX confirma que as assinaturas do MinEd sao validas.',
-    custo: '3.000 Kz por documento',
-    tempo: '5-10 dias uteis',
+    titulo: 'Reconhecimento de assinatura no MIREX',
+    descricao: 'O Ministério das Relações Exteriores (MIREX) reconhece a assinatura do ministério que autenticou o documento. Só depois disto o consulado estrangeiro aceita legalizá-lo.',
+    custo: 'Consulta a tabela em vigor no MIREX',
+    tempo: 'Varia',
   },
   {
     passo: 3,
-    titulo: 'Traducao Juramentada',
-    descricao: 'Traducao dos documentos para o idioma do pais de destino por um tradutor juramentado. A traducao deve incluir todos os selos e assinaturas.',
-    custo: '10.000 - 25.000 Kz por documento',
-    tempo: '2-7 dias',
+    titulo: 'Legalização consular',
+    descricao: 'Angola não consta como parte da Convenção da Apostila de Haia, por isso os documentos angolanos não levam apostila: são legalizados na embaixada ou consulado do país de destino em Angola. Confirma o estado atual no quadro oficial da HCCH.',
+    custo: 'Definido por cada consulado',
+    tempo: 'Definido por cada consulado',
   },
   {
     passo: 4,
-    titulo: 'Apostilha / Legalizacao Consular',
-    descricao: 'Consoante o pais de destino: paises signatarios da Convencao da Apostila de Haia necessitam apenas da apostilha; outros requerem legalizacao no consulado.',
-    custo: 'Varia conforme o pais',
-    tempo: '3-10 dias',
+    titulo: 'Tradução certificada (se necessária)',
+    descricao: 'Para destinos onde o português não é língua oficial, os documentos precisam normalmente de tradução certificada. Pergunta à universidade ou ao consulado se a tradução deve ser feita antes ou depois da legalização e por que tradutores.',
+    custo: 'Varia conforme o tradutor e o número de páginas',
+    tempo: 'Varia',
   },
 ];
+
+const fonteHcch = { titulo: 'HCCH — estado da Convenção da Apostila (lista oficial de países)', url: 'https://www.hcch.net/en/instruments/conventions/status-table/?cid=41' };
 
 export const guiasDocumentos: Record<string, GuiaDocumento> = {
   geral: {
@@ -48,110 +55,116 @@ export const guiasDocumentos: Record<string, GuiaDocumento> = {
     documentosBasicos,
     processoAutenticacao,
     requisitosEspecificos: [
-      'Todos os documentos devem ter menos de 6 meses na data da candidatura',
-      'Copias devem ser autenticadas por notario ou orgao emissor',
-      'Documentos em portugues geralmente necessitam de traducao juramentada',
-      'Verifica sempre os requisitos atualizados no site oficial da bolsa',
+      'Alguns documentos têm validade curta (ex.: registo criminal, exame médico). Confirma na bolsa a idade máxima aceite para cada um.',
+      'Cópias certificadas: confirma se a bolsa aceita cópias certificadas por notário ou se exige certificação pela entidade emissora.',
+      'Para destinos onde o português não é língua oficial, conta com tradução certificada.',
+      'O processo de autenticação acima é para documentos emitidos em Angola. Se os teus documentos são de outro país, informa-te junto do Ministério da Educação e do Ministério dos Negócios Estrangeiros locais, e vê no quadro da HCCH se o teu país usa apostila.',
+      'Verifica sempre os requisitos atualizados no site oficial da bolsa.',
     ],
-    reconhecimentoDiplomas: `O reconhecimento de diplomas e o processo pelo qual um pais valida que o teu diploma angolano e equivalente ao seu sistema educativo. Este processo e diferente da autenticacao:
+    reconhecimentoDiplomas: `Autenticação e reconhecimento são processos diferentes:
 
-**Autenticacao** = Confirma que o documento e original
-**Reconhecimento** = Confirma que o diploma tem valor equivalente
+Autenticação/legalização — confirma que o documento é verdadeiro e que a assinatura é válida.
+Reconhecimento — confirma que o teu grau tem valor equivalente a um grau do país de destino.
 
-Em alguns paises (como Portugal), este processo chama-se NOSTRIFICATION. Em outros, e simplesmente "recognition of prior learning".`,
+Para te candidatares a uma universidade, normalmente é a própria universidade que avalia o teu percurso. O reconhecimento formal do grau costuma ser necessário apenas quando precisas que ele produza efeitos legais ou profissionais nesse país.`,
+    fontes: [fonteHcch],
   },
   portugal: {
     pais: 'Portugal',
     documentosBasicos,
     processoAutenticacao,
     requisitosEspecificos: [
-      'NOSTRIFICATION: O reconhecimento de diploma e feito pela Direcao-Geral do Ensino Superior (DGES)',
-      'Cartao de Cidadao ou Visto de Estudante (consoante a bolsa)',
-      'NIF provisorio (pode ser obtido atraves da universidade)',
-      'Contrato de accommodation (algumas bolsas exigem)',
-      'Para cursos em portugues: certificado de proficiencia nao e necessario para angolanos',
+      'Visto de estudo pedido no consulado de Portugal no teu país. Depois da chegada, a autorização de residência é tratada com a AIMA.',
+      'NIF (Número de Identificação Fiscal), pedido nas Finanças — é necessário, por exemplo, para abrir conta bancária ou assinar contrato de arrendamento.',
+      'Cursos em português: falantes nativos de português costumam estar dispensados de certificado de língua — confirma com a universidade.',
+      'Documentos em português não precisam de tradução.',
     ],
-    reconhecimentoDiplomas: `Em Portugal, o reconhecimento de diplomas chama-se **NOSTRIFICATION** ou **Reconhecimento de Grau Estrangeiro**.
+    reconhecimentoDiplomas: `Em Portugal, o reconhecimento de graus estrangeiros é regulado pelo Decreto-Lei n.º 66/2018 (em vigor desde 1 de janeiro de 2019).
 
-**Quem pede:** A universidade portuguesa (nao o estudante diretamente)
-**Quando:** Geralmente apos a aceitacao na universidade
-**Custo:** Gratuito para bolsas do Santander; ate €100 para candidaturas independentes
-**Tempo:** 30-90 dias
+Existem três tipos de reconhecimento: automático, de nível e específico. O tipo depende do grau que tens e do fim para que precisas dele.
 
-**Documentos necessarios:**
-- Diploma original legalizado
-- Programa das disciplinas (transcript)
-- Certificado de conclusao`,
+O pedido é feito pelo titular do grau, junto da DGES ou de uma instituição de ensino superior pública, consoante o tipo de reconhecimento. As taxas e prazos são fixados pela DGES e pelas instituições — consulta os valores atuais antes de submeteres.
+
+Para te candidatares a um mestrado ou doutoramento, a universidade avalia o teu grau na própria candidatura; o reconhecimento formal só é necessário se precisares que o grau produza efeitos em Portugal.`,
+    fontes: [
+      { titulo: 'DGES — Decreto-Lei n.º 66/2018 (regime de reconhecimento)', url: 'https://www.dges.gov.pt/pt/content/decreto-lei-no-662018-aprova-o-regime-juridico-de-reconhecimento-de-graus-academicos-e' },
+      { titulo: 'Diário da República — Decreto-Lei n.º 66/2018 (versão consolidada)', url: 'https://diariodarepublica.pt/dr/legislacao-consolidada/decreto-lei/2018-116101330' },
+    ],
   },
   alemanha: {
     pais: 'Alemanha',
     documentosBasicos,
     processoAutenticacao,
     requisitosEspecificos: [
-      'A DAAD exige o reconhecimento previo pelo anabin.kmk.org',
-      'Para licenciatura: o 12o ano angolano e geralmente aceite diretamente',
-      'Para mestrado: e necessario que a licenciatura seja equivalente ao Bach alemão (3-4 anos)',
-      'TestDaF 4 ou DSH-2 para cursos em alemao; IELTS 6.5 para cursos em ingles',
-      'Blocked account (€11.208/ano) se nao houver bolsa completa',
+      'Conta bloqueada (Sperrkonto) para o visto de estudante, se não tiveres bolsa que cubra as despesas: €11.904 por ano (€992 por mês) em 2026. Confirma o valor atual no site do Ministério dos Negócios Estrangeiros alemão (Auswärtiges Amt).',
+      'Cursos em alemão: normalmente é exigido TestDaF (nível 4 em todas as secções) ou DSH-2. Cursos em inglês: o nível de IELTS/TOEFL é definido por cada programa.',
+      'Acesso à licenciatura: verifica no anabin (secção de certificados escolares) se o teu certificado do ensino secundário dá acesso direto ao ensino superior ou se precisas de passar por um Studienkolleg.',
+      'Muitas universidades recebem candidaturas de estudantes internacionais através da uni-assist — confirma no site do programa.',
     ],
-    reconhecimentoDiplomas: `Na Alemanha, o reconhecimento de diplomas e feito atraves do portal **anabin.kmk.org**.
+    reconhecimentoDiplomas: `Na Alemanha, a base de dados anabin indica como são avaliadas as instituições e os graus estrangeiros.
 
-**Como funciona:**
-1. Acede a anabin.kmk.org
-2. Pesquisa a tua instituicao de ensino
-3. Verifica se o teu curso tem equivalencia H+ (Hochschulreife)
-4. Se nao estiver listada, contacta a ZAB (Central Office for Foreign Education)
+H+ — a instituição é reconhecida no país de origem e considerada instituição de ensino superior na Alemanha.
+H+/- — só alguns cursos ou alguns períodos são reconhecidos.
+H- — a instituição não é considerada instituição de ensino superior na Alemanha.
 
-**Para bolsas DAAD:**
-- O processo de reconhecimento e geralmente simplificado
-- A universidade alema ajuda no processo
-- Pode levar 4-8 semanas`,
+Mesmo numa instituição H+, o teu grau específico também tem de constar na lista de graus. Se não constar, podes pedir uma avaliação individual (Zeugnisbewertung) à ZAB — Zentralstelle für ausländisches Bildungswesen. Há uma taxa e o processo demora alguns meses; consulta o valor e o prazo atuais no site da ZAB.
+
+Para te candidatares a um curso, é a universidade (ou a uni-assist) que avalia os teus documentos.`,
+    fontes: [
+      { titulo: 'Auswärtiges Amt — serviço de vistos (meios financeiros / conta bloqueada)', url: 'https://www.auswaertiges-amt.de/en/visa-service' },
+      { titulo: 'anabin — base de dados oficial', url: 'https://anabin.kmk.org' },
+      { titulo: 'Make it in Germany — como usar o anabin', url: 'https://www.make-it-in-germany.com/de/jobs/anerkennung/hochschulabschluesse/' },
+      { titulo: 'ZAB — avaliação de certificados (Zeugnisbewertung)', url: 'https://www.kmk.org/zab/zentralstelle-fuer-auslaendisches-bildungswesen.html' },
+    ],
   },
   china: {
     pais: 'China',
     documentosBasicos,
     processoAutenticacao,
     requisitosEspecificos: [
-      'Exame HSK nivel 4 (para cursos em chines) ou IELTS 6.0 (para cursos em ingles)',
-      'Formulario de candidatura CSC preenchido',
-      'Carta de aceitacao preliminar da universidade chinesa',
-      'Plano de estudo detalhado em chines ou ingles',
-      'Sem antecedentes criminais (certificado emitido em Angola)',
-      'Exame medico completo (formulario especifico da China)',
+      'Bolsa do Governo Chinês (CSC): candidatura no portal do CSC e, consoante o tipo de programa, também na universidade ou na embaixada da China no teu país.',
+      'Cursos em chinês: normalmente HSK 4 ou superior (alguns cursos de humanidades pedem HSK 5). Quem não tem o nível pode, em muitos programas, fazer primeiro um ano de chinês.',
+      'Cursos em inglês: IELTS/TOEFL com o nível definido por cada universidade (há guias que pedem IELTS 5.5 e outros mais).',
+      'Formulário de exame médico para estrangeiros (Foreigner Physical Examination Form), preenchido em inglês, com foto, carimbo e assinatura do médico. Os resultados costumam ser válidos por 6 meses.',
+      'Certificado de registo criminal emitido no teu país.',
+      'Plano de estudos ou de investigação e, frequentemente, carta de pré-admissão da universidade.',
     ],
-    reconhecimentoDiplomas: `Na China, o reconhecimento de diplomas e feito durante o processo de candidatura a bolsa CSC.
+    reconhecimentoDiplomas: `Não há um processo prévio separado de reconhecimento: a universidade chinesa e o CSC avaliam os teus documentos académicos durante a candidatura.
 
-**Processo:**
-1. A universidade chinesa avalia os documentos academicos
-2. O CSC (China Scholarship Council) faz uma segunda verificacao
-3. Nao ha necessidade de reconhecimento previo separado
+Os documentos devem ser apresentados em chinês ou inglês (tradução certificada).
 
-**Nota importante:**
-- Os documentos devem ser traduzidos para chines ou ingles
-- A traducao deve ser feita por tradutor juramentado reconhecido pela embaixada chinesa
-- A embaixada da China em Luanda pode ajudar com a lista de tradutores autorizados`,
+A China aplica a Convenção da Apostila desde 7 de novembro de 2023. Isto só dispensa a legalização consular se o país que emitiu o documento também for parte da Convenção — os documentos de países que não são parte (como Angola) continuam a ser legalizados na embaixada ou consulado da China.`,
+    fontes: [
+      { titulo: 'HCCH — Convenção da Apostila em vigor para a China (7/11/2023)', url: 'https://www.hcch.net/en/news-archive/details/?varevent=947' },
+      fonteHcch,
+      { titulo: 'Campus China / CSC — portal de bolsas do Governo Chinês', url: 'https://www.campuschina.org' },
+    ],
   },
   brasil: {
     pais: 'Brasil',
     documentosBasicos,
     processoAutenticacao,
     requisitosEspecificos: [
-      'Para medicina e odontologia: o Revalida e obrigatorio para exercer no Brasil',
-      'Carta de aceitacao de orientador brasileiro e essencial',
-      'Projeto de pesquisa aprovado pelo orientador',
-      'Nao e necessario exame de idioma para angolanos (portugues)',
-      'CPF provisorio (para abertura de conta bancaria)',
+      'Em programas de pós-graduação, a carta de aceitação de um orientador e um projeto de investigação são frequentemente exigidos — confirma no edital.',
+      'Falantes nativos de português normalmente não precisam de exame de língua.',
+      'CPF (Cadastro de Pessoas Físicas): necessário, por exemplo, para abrir conta bancária.',
+      'Documentos em português não precisam de tradução.',
     ],
-    reconhecimentoDiplomas: `No Brasil, o reconhecimento de diplomas e feito pelo **MEC (Ministerio da Educacao)**.
+    reconhecimentoDiplomas: `No Brasil distinguem-se dois processos:
 
-**Processo:**
-1. A universidade brasileira faz a equivalencia durante a candidatura
-2. Para mestrado/doutoramento: a PPG (Pos-Graduacao) avalia o curriculo
-3. O MEC pode solicitar documentacao adicional
+Revalidação — para diplomas de graduação (licenciatura), feita por universidades públicas.
+Reconhecimento — para diplomas de pós-graduação stricto sensu (mestrado e doutoramento), feito por universidades com programas avaliados pela CAPES.
 
-**Para bolsas CAPES/CNPq:**
-- O reconhecimento e facilitado pelo acordo cultural entre Angola e Brasil
-- Documentos em portugues nao necessitam de traducao`,
+Os pedidos são submetidos pela Plataforma Carolina Bori, do MEC.
+
+Medicina tem um processo próprio: o Revalida (Exame Nacional de Revalidação de Diplomas Médicos, Lei n.º 13.959/2019), aplicado pelo Inep.
+
+Para estudar no Brasil não precisas de revalidar o diploma — isso só é necessário para exerceres a profissão ou para o diploma produzir efeitos legais no país.`,
+    fontes: [
+      { titulo: 'Plataforma Carolina Bori — MEC', url: 'https://plataformacarolinabori.mec.gov.br' },
+      { titulo: 'Gov.br — Revalida', url: 'https://www.gov.br/pt-br/servicos/fazer-o-exame-nacional-de-revalidacao-de-diplomas-medicos-expedidos-por-instituicao-de-educacao-superior-estrangeira' },
+      { titulo: 'Lei n.º 13.959/2019', url: 'https://www2.camara.leg.br/legin/fed/lei/2019/lei-13959-18-dezembro-2019-789607-publicacaooriginal-159705-pl.html' },
+    ],
   },
 };
 

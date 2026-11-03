@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { z } from 'zod';
+import { bolsaAtivaWhere } from '@/lib/bolsas';
 
 const querySchema = z.object({
   id: z.string().min(1),
@@ -27,14 +28,13 @@ export async function GET(req: NextRequest) {
 
     const bolsas = await db.bolsa.findMany({
       where: {
-        id: { not: id },
-        status: { not: 'FECHADA' },
-        OR: [
-          ...(pais ? [{ pais }] : []),
-          ...(area ? [{ area }] : []),
+        AND: [
+          bolsaAtivaWhere(),
+          { id: { not: id } },
+          { OR: [...(pais ? [{ pais }] : []), ...(area ? [{ area }] : [])] },
         ],
       },
-      orderBy: { prazo: 'asc' },
+      orderBy: { prazo: { sort: 'asc', nulls: 'last' } },
       take: limit,
       include: { processo: true, dicas: true },
     });

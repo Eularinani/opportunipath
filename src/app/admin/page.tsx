@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
 import { statusBolsaLabel } from '@/lib/utils';
+import { atualizarStatusBolsas, VALIDADE_VERIFICACAO_DIAS } from '@/lib/bolsas';
 import ChartCard from '@/components/admin/ChartCard';
 import BolsasPorPaisChart from '@/components/admin/charts/BolsasPorPaisChart';
 import BolsasPorStatusChart from '@/components/admin/charts/BolsasPorStatusChart';
@@ -11,16 +12,25 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = { title: 'Dashboard — Admin' };
 
 async function getStats() {
-  const [totalBolsas, bolsasAbertas, totalGuias, totalSubscribers, totalContactos, contactosNaoLidos] =
+  const limiteVerificacao = new Date(Date.now() - VALIDADE_VERIFICACAO_DIAS * 24 * 60 * 60 * 1000);
+  const [totalBolsas, bolsasAbertas, porVerificar, porReverificar, totalGuias, totalSubscribers, totalContactos, contactosNaoLidos] =
     await Promise.all([
       db.bolsa.count(),
-      db.bolsa.count({ where: { status: { in: ['ABERTA', 'URGENTE'] } } }),
+      db.bolsa.count({ where: { estadoRevisao: 'PUBLICADA', status: { in: ['ABERTA', 'URGENTE'] } } }),
+      db.bolsa.count({ where: { estadoRevisao: 'RASCUNHO' } }),
+      db.bolsa.count({
+        where: {
+          estadoRevisao: 'PUBLICADA',
+          status: { not: 'FECHADA' },
+          OR: [{ verificadoEm: null }, { verificadoEm: { lt: limiteVerificacao } }],
+        },
+      }),
       db.guia.count({ where: { publicado: true } }),
       db.newsletterSubscriber.count({ where: { ativo: true } }),
       db.contacto.count(),
       db.contacto.count({ where: { lido: false } }),
     ]);
-  return { totalBolsas, bolsasAbertas, totalGuias, totalSubscribers, totalContactos, contactosNaoLidos };
+  return { totalBolsas, bolsasAbertas, porVerificar, porReverificar, totalGuias, totalSubscribers, totalContactos, contactosNaoLidos };
 }
 
 async function getRecentBolsas() {
@@ -79,6 +89,9 @@ async function getContactosPorStatus() {
 }
 
 export default async function AdminDashboard() {
+  // Mantém a cache `status` alinhada com as datas antes de contar/agrupar
+  await atualizarStatusBolsas();
+
   const [stats, recentBolsas, bolsasPorPais, bolsasPorStatus, bolsasPorMes, contactosPorStatus] =
     await Promise.all([
       getStats(),
@@ -90,7 +103,8 @@ export default async function AdminDashboard() {
     ]);
 
   const statCards = [
-    { label: 'Total de Bolsas', value: stats.totalBolsas, sub: `${stats.bolsasAbertas} abertas`, color: 'bg-path-teal' },
+    { label: 'Total de Bolsas', value: stats.totalBolsas, sub: `${stats.bolsasAbertas} publicadas e abertas`, color: 'bg-path-teal' },
+    { label: 'Por Verificar', value: stats.porVerificar, sub: `${stats.porReverificar} publicadas a reverificar`, color: 'bg-red-500' },
     { label: 'Guias Publicados', value: stats.totalGuias, sub: 'artigos activos', color: 'bg-path-amber' },
     { label: 'Subscritores', value: stats.totalSubscribers, sub: 'newsletter activa', color: 'bg-path-teal' },
     { label: 'Contactos', value: stats.totalContactos, sub: `${stats.contactosNaoLidos} não lidos`, color: 'bg-purple-500' },
@@ -104,7 +118,16 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {(stats.porVerificar > 0 || stats.porReverificar > 0) && (
+        <Link
+          href="/admin/bolsas?estado=RASCUNHO"
+          className="block bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-xl px-5 py-3 hover:bg-amber-100"
+        >
+          {stats.porVerificar} bolsas por verificar e {stats.porReverificar} publicadas com verificação com mais de {VALIDADE_VERIFICACAO_DIAS} dias. Rever agora →
+        </Link>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
         {statCards.map((card) => (
           <div key={card.label} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
             <div className={`w-10 h-10 ${card.color} rounded-lg flex items-center justify-center mb-3`}>

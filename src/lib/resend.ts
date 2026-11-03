@@ -24,7 +24,7 @@ export async function sendNewsletterWelcome(email: string) {
         <h2 style="font-size: 22px; color: ${TEXT_COLOR};">Bem-vindo(a) à nossa newsletter! 🎉</h2>
         <p style="color: ${SUBTEXT_COLOR}; line-height: 1.7;">
           A partir de agora vais receber semanalmente as melhores bolsas de estudo
-          internacionais selecionadas para angolanos.
+          internacionais verificadas.
         </p>
         <div style="background: ${BG_COLOR}; border-radius: 12px; padding: 20px; margin: 24px 0;">
           <p style="font-weight: 600; margin: 0 0 8px;">O que vais receber:</p>

@@ -1,13 +1,12 @@
-import Image from 'next/image';
 import HeroSection from '@/components/sections/HeroSection';
 import ScrollReveal from '@/components/shared/ScrollReveal';
-import { equipa, valores } from '@/data/equipa';
-import { Mail, Phone, MapPin, Linkedin, Twitter, Facebook, Send } from 'lucide-react';
+import { valores } from '@/data/equipa';
+import { Mail, MapPin, Globe, ExternalLink, ShieldCheck } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Sobre',
-  description: 'Conhece a missão do OportuniPath e a equipa por detrás da plataforma de bolsas de estudo para angolanos.',
+  description: 'Conhece a missão do OportuniPath, um projeto da SecuraDist, a plataforma de bolsas de estudo internacionais verificadas.',
 };
 
 export default function SobrePage() {
@@ -15,7 +14,7 @@ export default function SobrePage() {
     <main>
       <HeroSection
         title="A Nossa Missão"
-        description="O OportuniPath nasceu da crença de que a educação é o caminho mais seguro para o desenvolvimento de Angola. A nossa missão é democratizar o acesso à informação sobre bolsas de estudo internacionais."
+        description="O OportuniPath nasceu da crença de que a educação é o caminho mais seguro para o desenvolvimento de qualquer país. A nossa missão é democratizar o acesso a informação verificada sobre bolsas de estudo internacionais."
         breadcrumb={[
           { label: 'Início', href: '/' },
           { label: 'Sobre', href: '/sobre' },
@@ -31,19 +30,19 @@ export default function SobrePage() {
             </h2>
             <div className="space-y-4 text-path-slate-dark leading-relaxed">
               <p>
-                Em 2023, percebemos que muitos jovens angolanos talentosos perdiam oportunidades de bolsas
+                Em 2023, percebemos que muitos jovens talentosos perdiam oportunidades de bolsas
                 de estudo internacionais simplesmente por falta de informação. Os processos de candidatura
                 eram complexos, a documentação confusa, e não havia nenhuma plataforma centralizada que
-                orientasse os estudantes angolanos nesta jornada.
+                orientasse os estudantes nesta jornada.
               </p>
               <p>
-                Foi assim que nasceu o OportuniPath — uma plataforma criada por angolanos, para angolanos,
-                com o objetivo de descomplicar o acesso à educação internacional. Reunimos informações
-                sobre centenas de bolsas, criamos guias detalhados de documentação específicos para o
-                contexto angolano, e partilhamos histórias inspiradoras de quem já conseguiu.
+                Foi assim que nasceu o OportuniPath — uma plataforma nascida em Angola e aberta a estudantes
+                de todo o mundo, com o objetivo de descomplicar o acesso à educação internacional. Cada bolsa
+                que publicamos é verificada na fonte oficial, criamos guias práticos de documentação e
+                partilhamos histórias inspiradoras de quem já conseguiu.
               </p>
               <p>
-                Sonhamos com um futuro onde qualquer jovem angolano, independentemente da sua origem,
+                Sonhamos com um futuro onde qualquer jovem, independentemente da sua origem,
                 possa aceder a informação de qualidade sobre oportunidades de educação no exterior.
               </p>
             </div>
@@ -80,7 +79,7 @@ export default function SobrePage() {
         </div>
       </section>
 
-      {/* Equipa */}
+      {/* Quem Somos */}
       <section className="py-20 bg-white">
         <div className="container-ango max-w-[900px]">
           <ScrollReveal>
@@ -89,32 +88,32 @@ export default function SobrePage() {
             </h2>
           </ScrollReveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            {equipa.map((membro, i) => (
-              <ScrollReveal key={membro.nome} delay={i * 0.15} className="text-center">
-                <div className="relative w-[120px] h-[120px] rounded-full overflow-hidden mx-auto mb-4">
-                  <Image src={membro.imagem} alt={membro.nome} fill className="object-cover" />
-                </div>
-                <h3 className="font-poppins font-semibold text-lg text-path-navy">{membro.nome}</h3>
-                <p className="text-path-teal text-sm mb-2">{membro.funcao}</p>
-                <p className="text-path-slate text-sm max-w-[280px] mx-auto mb-3">
-                  {membro.bio}
+          <ScrollReveal>
+            <div className="bg-path-cream rounded-2xl p-8 md:p-10 flex flex-col md:flex-row gap-8 items-start">
+              <div className="w-16 h-16 rounded-2xl bg-path-navy flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-8 h-8 text-path-teal" />
+              </div>
+              <div className="space-y-4">
+                <h3 className="font-poppins font-semibold text-xl text-path-navy">
+                  O OportuniPath é um projeto da SecuraDist
+                </h3>
+                <p className="text-path-slate-dark leading-relaxed">
+                  A SecuraDist é uma empresa de cibersegurança, sistemas e formação que atua em Portugal e
+                  Angola. É a SecuraDist que desenvolve e mantém a plataforma OportuniPath.
                 </p>
-                <div className="flex items-center justify-center gap-3">
-                  {membro.linkedin && (
-                    <a href={membro.linkedin} target="_blank" rel="noopener noreferrer" className="text-path-slate hover:text-path-teal transition-colors">
-                      <Linkedin className="w-5 h-5" />
-                    </a>
-                  )}
-                  {membro.twitter && (
-                    <a href={membro.twitter} target="_blank" rel="noopener noreferrer" className="text-path-slate hover:text-path-teal transition-colors">
-                      <Twitter className="w-5 h-5" />
-                    </a>
-                  )}
-                </div>
-              </ScrollReveal>
-            ))}
-          </div>
+                <a
+                  href="https://securadist.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-path-navy text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-path-teal transition-colors"
+                >
+                  <Globe className="w-4 h-4" />
+                  securadist.com
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
@@ -127,7 +126,7 @@ export default function SobrePage() {
                 Fala Connosco
               </h2>
               <p className="text-path-slate text-base">
-                Tens dúvidas, sugestões ou queres colaborar? Entra em contacto.
+                Tens dúvidas, encontraste um erro numa bolsa ou queres colaborar? Entra em contacto.
               </p>
             </div>
           </ScrollReveal>
@@ -141,16 +140,20 @@ export default function SobrePage() {
                   </div>
                   <div>
                     <p className="font-medium text-path-navy text-sm">Email</p>
-                    <p className="text-path-slate text-sm">geral@opportunipath.ao</p>
+                    <a href="mailto:geral@securadist.com" className="text-path-slate text-sm hover:text-path-teal">
+                      geral@securadist.com
+                    </a>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-full bg-path-teal/10 flex items-center justify-center shrink-0">
-                    <Phone className="w-5 h-5 text-path-teal" />
+                    <Globe className="w-5 h-5 text-path-teal" />
                   </div>
                   <div>
-                    <p className="font-medium text-path-navy text-sm">Telefone</p>
-                    <p className="text-path-slate text-sm">+244 923 456 789</p>
+                    <p className="font-medium text-path-navy text-sm">Website</p>
+                    <a href="https://securadist.com" target="_blank" rel="noopener noreferrer" className="text-path-slate text-sm hover:text-path-teal">
+                      securadist.com
+                    </a>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
@@ -158,23 +161,8 @@ export default function SobrePage() {
                     <MapPin className="w-5 h-5 text-path-teal" />
                   </div>
                   <div>
-                    <p className="font-medium text-path-navy text-sm">Localização</p>
-                    <p className="text-path-slate text-sm">Luanda, Angola</p>
-                  </div>
-                </div>
-
-                <div className="pt-6">
-                  <p className="font-medium text-path-navy text-sm mb-3">Redes Sociais</p>
-                  <div className="flex items-center gap-3">
-                    <a href="#" className="w-10 h-10 rounded-full bg-path-navy flex items-center justify-center text-white hover:bg-path-teal transition-colors">
-                      <Facebook className="w-5 h-5" />
-                    </a>
-                    <a href="#" className="w-10 h-10 rounded-full bg-path-navy flex items-center justify-center text-white hover:bg-path-teal transition-colors">
-                      <Twitter className="w-5 h-5" />
-                    </a>
-                    <a href="#" className="w-10 h-10 rounded-full bg-path-navy flex items-center justify-center text-white hover:bg-path-teal transition-colors">
-                      <Linkedin className="w-5 h-5" />
-                    </a>
+                    <p className="font-medium text-path-navy text-sm">Onde estamos</p>
+                    <p className="text-path-slate text-sm">Portugal e Angola</p>
                   </div>
                 </div>
               </div>
@@ -182,13 +170,13 @@ export default function SobrePage() {
 
             <ScrollReveal>
               <div className="bg-path-cream rounded-xl p-6 text-center">
-                <Send className="w-10 h-10 text-path-teal mx-auto mb-3" />
+                <Mail className="w-10 h-10 text-path-teal mx-auto mb-3" />
                 <h3 className="font-poppins font-semibold text-lg text-path-navy mb-2">Envia-nos uma mensagem</h3>
                 <p className="text-path-slate text-sm mb-4">
-                  Usa o formulário de contacto na página inicial ou envia um email diretamente.
+                  Se encontraste informação errada ou desatualizada numa bolsa, indica o link da página e o que está errado.
                 </p>
                 <a
-                  href="mailto:geral@opportunipath.ao"
+                  href="mailto:geral@securadist.com?subject=OportuniPath"
                   className="inline-flex items-center gap-2 bg-path-teal text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-path-teal-dark transition-colors"
                 >
                   <Mail className="w-4 h-4" />

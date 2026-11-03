@@ -1,11 +1,12 @@
 import { MetadataRoute } from 'next';
 import { db } from '@/lib/db';
+import { bolsaAtivaWhere } from '@/lib/bolsas';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://opportunipath.ao';
 
   const [bolsas, guias] = await Promise.all([
-    db.bolsa.findMany({ where: { status: { not: 'FECHADA' } }, select: { slug: true, updatedAt: true } }),
+    db.bolsa.findMany({ where: bolsaAtivaWhere(), select: { slug: true, updatedAt: true } }),
     db.guia.findMany({ where: { publicado: true }, select: { slug: true, updatedAt: true } }),
   ]);
 

@@ -2,12 +2,14 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import { getPrazoLabel, getPrazoColor, cn } from '@/lib/utils';
 import AdminBolsaActions from '@/components/admin/AdminBolsaActions';
+import { calcularStatus, verificacaoExpirada } from '@/lib/bolsas';
+import type { EstadoRevisao, Prisma } from '@prisma/client';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = { title: 'Gerir Bolsas — Admin' };
 
 interface Props {
-  searchParams: Promise<{ page?: string; q?: string }>;
+  searchParams: Promise<{ page?: string; q?: string; estado?: string }>;
 }
 
 export default async function AdminBolsasPage({ searchParams }: Props) {
@@ -15,17 +17,24 @@ export default async function AdminBolsasPage({ searchParams }: Props) {
   const page = Number(params.page ?? 1);
   const limit = 15;
 
-  const where = params.q
-    ? {
-        OR: [
-          { titulo: { contains: params.q, mode: 'insensitive' as const } },
-          { pais: { contains: params.q, mode: 'insensitive' as const } },
-          { universidade: { contains: params.q, mode: 'insensitive' as const } },
-        ],
-      }
-    : {};
+  const estados: EstadoRevisao[] = ['RASCUNHO', 'PUBLICADA', 'ARQUIVADA'];
+  const estado = estados.find((e) => e === params.estado);
 
-  const [total, bolsas] = await Promise.all([
+  const where: Prisma.BolsaWhereInput = {
+    ...(estado ? { estadoRevisao: estado } : {}),
+    ...(params.q
+      ? {
+          OR: [
+            { titulo: { contains: params.q, mode: 'insensitive' as const } },
+            { pais: { contains: params.q, mode: 'insensitive' as const } },
+            { universidade: { contains: params.q, mode: 'insensitive' as const } },
+          ],
+        }
+      : {}),
+  };
+
+  const [contagemEstados, total, bolsas] = await Promise.all([
+    db.bolsa.groupBy({ by: ['estadoRevisao'], _count: { id: true } }),
     db.bolsa.count({ where }),
     db.bolsa.findMany({
       where,
@@ -36,6 +45,14 @@ export default async function AdminBolsasPage({ searchParams }: Props) {
   ]);
 
   const totalPages = Math.ceil(total / limit);
+  const contagem = (e: EstadoRevisao) => contagemEstados.find((c) => c.estadoRevisao === e)?._count.id ?? 0;
+  const qs = (extra: Record<string, string | number | undefined>) => {
+    const sp = new URLSearchParams();
+    const all = { q: params.q, estado, ...extra };
+    Object.entries(all).forEach(([k, v]) => v !== undefined && v !== '' && sp.set(k, String(v)));
+    const str = sp.toString();
+    return str ? `?${str}` : '';
+  };
 
   return (
     <div className="space-y-5">
@@ -52,8 +69,30 @@ export default async function AdminBolsasPage({ searchParams }: Props) {
         </Link>
       </div>
 
+      {/* Filtro por estado de revisão */}
+      <div className="flex gap-2 flex-wrap text-sm">
+        {[
+          { label: 'Todas', value: undefined },
+          { label: `Por verificar (${contagem('RASCUNHO')})`, value: 'RASCUNHO' },
+          { label: `Publicadas (${contagem('PUBLICADA')})`, value: 'PUBLICADA' },
+          { label: `Arquivadas (${contagem('ARQUIVADA')})`, value: 'ARQUIVADA' },
+        ].map((f) => (
+          <Link
+            key={f.label}
+            href={`/admin/bolsas${qs({ estado: f.value, page: undefined })}`}
+            className={cn(
+              'px-3 py-1.5 rounded-full border',
+              estado === f.value ? 'bg-path-teal text-white border-path-teal' : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+            )}
+          >
+            {f.label}
+          </Link>
+        ))}
+      </div>
+
       {/* Search */}
       <form className="flex gap-2">
+        {estado && <input type="hidden" name="estado" value={estado} />}
         <input
           name="q"
           defaultValue={params.q}
@@ -72,16 +111,20 @@ export default async function AdminBolsasPage({ searchParams }: Props) {
               <th className="text-left px-4 py-3 font-medium text-gray-500 hidden md:table-cell">País</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500 hidden lg:table-cell">Prazo</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500">Estado</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Verificação</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500 hidden lg:table-cell">Destaque</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {bolsas.map((b) => (
+            {bolsas.map((b) => {
+              const status = calcularStatus(b);
+              const expirada = verificacaoExpirada(b.verificadoEm);
+              return (
               <tr key={b.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-4 py-3">
                   <p className="font-medium text-gray-900 line-clamp-1 max-w-xs">{b.titulo}</p>
-                  <p className="text-gray-400 text-xs">{b.nivel} · {b.area}</p>
+                  <p className="text-gray-400 text-xs">{b.nivel ?? 'Nível ?'} · {b.area ?? 'Área ?'}{!b.linkOficial && ' · sem link oficial'}</p>
                 </td>
                 <td className="px-4 py-3 hidden md:table-cell text-gray-600">
                   {b.bandeira} {b.pais}
@@ -91,12 +134,24 @@ export default async function AdminBolsasPage({ searchParams }: Props) {
                 </td>
                 <td className="px-4 py-3">
                   <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                    b.status === 'ABERTA' ? 'bg-green-100 text-green-700'
-                    : b.status === 'URGENTE' ? 'bg-red-100 text-red-700'
+                    status === 'ABERTA' ? 'bg-green-100 text-green-700'
+                    : status === 'URGENTE' ? 'bg-red-100 text-red-700'
                     : 'bg-gray-100 text-gray-500'
                   }`}>
-                    {b.status}
+                    {status}
                   </span>
+                </td>
+                <td className="px-4 py-3 text-xs">
+                  {b.estadoRevisao === 'PUBLICADA' ? (
+                    <span className={expirada ? 'text-amber-600' : 'text-green-600'}>
+                      {expirada ? '⚠ Reverificar' : '✓ Verificada'}
+                      {b.verificadoEm && (
+                        <span className="block text-gray-400">{b.verificadoEm.toLocaleDateString('pt-PT')}{b.verificadoPor && ` · ${b.verificadoPor}`}</span>
+                      )}
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">{b.estadoRevisao === 'RASCUNHO' ? 'Por verificar' : 'Arquivada'}</span>
+                  )}
                 </td>
                 <td className="px-4 py-3 hidden lg:table-cell">
                   <span className={`text-xs ${b.destaque ? 'text-path-amber' : 'text-gray-300'}`}>
@@ -104,12 +159,13 @@ export default async function AdminBolsasPage({ searchParams }: Props) {
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <AdminBolsaActions id={b.id} />
+                  <AdminBolsaActions id={b.id} slug={b.slug} estadoRevisao={b.estadoRevisao} precisaReverificar={expirada} />
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {bolsas.length === 0 && (
-              <tr><td colSpan={6} className="text-center py-10 text-gray-400">Nenhuma bolsa encontrada.</td></tr>
+              <tr><td colSpan={7} className="text-center py-10 text-gray-400">Nenhuma bolsa encontrada.</td></tr>
             )}
           </tbody>
         </table>
@@ -119,10 +175,10 @@ export default async function AdminBolsasPage({ searchParams }: Props) {
             <span className="text-gray-500">Página {page} de {totalPages}</span>
             <div className="flex gap-2">
               {page > 1 && (
-                <Link href={`/admin/bolsas?page=${page - 1}${params.q ? `&q=${params.q}` : ''}`} className="px-3 py-1 border rounded hover:bg-gray-50">←</Link>
+                <Link href={`/admin/bolsas${qs({ page: page - 1 })}`} className="px-3 py-1 border rounded hover:bg-gray-50">←</Link>
               )}
               {page < totalPages && (
-                <Link href={`/admin/bolsas?page=${page + 1}${params.q ? `&q=${params.q}` : ''}`} className="px-3 py-1 border rounded hover:bg-gray-50">→</Link>
+                <Link href={`/admin/bolsas${qs({ page: page + 1 })}`} className="px-3 py-1 border rounded hover:bg-gray-50">→</Link>
               )}
             </div>
           </div>

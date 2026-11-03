@@ -19,8 +19,8 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: { default: 'OportuniPath — O Teu Caminho para o Mundo', template: '%s | OportuniPath' },
-  description: 'Descobre bolsas de estudo internacionais para angolanos. De Licenciatura a Doutoramento, guiamos cada passo da tua candidatura.',
-  keywords: ['bolsas de estudo', 'angola', 'estudar no exterior', 'mestrado', 'doutoramento', 'oportunidades'],
+  description: 'Descobre bolsas de estudo internacionais verificadas, para estudantes de qualquer país. De Licenciatura a Doutoramento, guiamos cada passo da tua candidatura.',
+  keywords: ['bolsas de estudo', 'bolsas internacionais', 'estudar no exterior', 'mestrado', 'doutoramento', 'oportunidades'],
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL ?? 'https://opportunipath.ao'),
   manifest: '/manifest.json',
   appleWebApp: {

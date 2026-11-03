@@ -7,7 +7,7 @@ import ScrollReveal from '@/components/shared/ScrollReveal';
 
 export const metadata: Metadata = {
   title: 'Guias & Dicas',
-  description: 'Artigos e guias práticos para angolanos que querem estudar no exterior.',
+  description: 'Artigos e guias práticos para quem quer estudar no exterior.',
 };
 
 const categorias = ['Todos', 'Candidatura', 'Documentos', 'Visa', 'Financeiro', 'Vida no Exterior'];
