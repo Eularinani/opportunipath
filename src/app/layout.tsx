@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter, Poppins } from 'next/font/google';
 import { Toaster } from 'sonner';
 import './globals.css';
+import { ThemeProvider } from '@/components/theme-provider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -50,9 +51,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt" className={`${inter.variable} ${poppins.variable}`} suppressHydrationWarning>
-      <body className="min-h-screen bg-path-cream antialiased">
-        {children}
-        <Toaster position="top-right" richColors />
+      <body className="min-h-screen bg-background text-foreground antialiased">
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          {children}
+          <Toaster position="top-right" richColors />
+        </ThemeProvider>
       </body>
     </html>
   );

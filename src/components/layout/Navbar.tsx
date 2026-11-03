@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Compass, Menu, X } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 const navLinks = [
   { label: 'Início', href: '/' },
@@ -69,12 +70,15 @@ export default function Navbar() {
           })}
         </div>
 
-        <Link
-          href="/bolsas"
-          className="hidden md:inline-flex items-center px-5 py-2.5 rounded-full font-inter font-semibold text-sm bg-path-teal text-white hover:bg-path-teal-dark transition-all shadow-soft hover:shadow-md"
-        >
-          Explorar Bolsas
-        </Link>
+        <div className="hidden md:flex items-center gap-3">
+          <ThemeToggle />
+          <Link
+            href="/bolsas"
+            className="inline-flex items-center px-5 py-2.5 rounded-full font-inter font-semibold text-sm bg-path-teal text-white hover:bg-path-teal-dark transition-all shadow-soft hover:shadow-md"
+          >
+            Explorar Bolsas
+          </Link>
+        </div>
 
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild className="md:hidden">
@@ -96,6 +100,9 @@ export default function Navbar() {
                 <button onClick={() => setMobileOpen(false)} className="text-white/60 hover:text-white">
                   <X className="w-6 h-6" />
                 </button>
+              </div>
+              <div className="flex items-center justify-between mb-6">
+                <ThemeToggle />
               </div>
               <div className="flex flex-col gap-2">
                 {navLinks.map((link) => (
