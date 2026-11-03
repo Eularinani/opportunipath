@@ -11,6 +11,9 @@ import { cn } from '@/lib/utils';
 import { bolsaAtivaWhere, bolsaPublicadaWhere, statusWhere } from '@/lib/bolsas';
 import type { Metadata } from 'next';
 
+// Regenera no máximo a cada 5 min: contadores e prazos nunca ficam congelados no build
+export const revalidate = 300;
+
 export const metadata: Metadata = {
   title: 'OportuniPath — O Teu Caminho para o Mundo',
   description: 'Descobre bolsas de estudo internacionais verificadas, para estudantes de qualquer país. De cursos de línguas a Doutoramento, em qualquer parte do mundo.',

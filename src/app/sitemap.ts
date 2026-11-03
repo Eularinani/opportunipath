@@ -2,6 +2,9 @@ import { MetadataRoute } from 'next';
 import { db } from '@/lib/db';
 import { bolsaAtivaWhere } from '@/lib/bolsas';
 
+// Gerado a cada pedido: não depende da BD no build e reflete sempre as bolsas publicadas
+export const dynamic = 'force-dynamic';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://opportunipath.ao';
 
